@@ -19,6 +19,7 @@ public class WorkoutDay {
     private int cycle;
     private int week;
     private int dayNumber;
+    private boolean completed;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JsonManagedReference

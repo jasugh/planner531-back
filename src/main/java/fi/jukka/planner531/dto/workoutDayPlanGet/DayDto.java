@@ -8,15 +8,17 @@ public class DayDto {
     private int day;
     private String exercise;
     private LocalDate workoutDate;
+    private boolean completed;
     private List<SetDto> setDtos = new ArrayList<>();
 
     public DayDto() {
     }
 
-    public DayDto(int day, String exercise, LocalDate workoutDate, List<SetDto> setDtos) {
+    public DayDto(int day, String exercise, LocalDate workoutDate, boolean completed, List<SetDto> setDtos) {
         this.day = day;
         this.exercise = exercise;
         this.workoutDate = workoutDate;
+        this.completed = completed;
         this.setDtos = setDtos;
     }
 
@@ -42,6 +44,14 @@ public class DayDto {
 
     public void setWorkoutDate(LocalDate workoutDate) {
         this.workoutDate = workoutDate;
+    }
+
+    public boolean isCompleted() {
+        return completed;
+    }
+
+    public void setCompleted(boolean completed) {
+        this.completed = completed;
     }
 
     public List<SetDto> getSetDtos() {

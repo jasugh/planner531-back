@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/plan")
@@ -67,7 +69,7 @@ public class WorkoutDayPlanController {
 
     @GetMapping("/{loginId}/user")
     public WorkoutDayPlanGetDto getWorkoutDayPlanByLoginId(@PathVariable Long loginId) {
-        // Login information
+        // Get login information
         Login login = loginRepository.findById(loginId)
                 .orElseThrow(() -> new NotFoundException("Login data not found with id " + loginId));
 
@@ -76,6 +78,30 @@ public class WorkoutDayPlanController {
         }
         return converToGetDto(workoutDayPlanRepository
                 .getOne(login.getWorkoutDayPlan().getId()));
+    }
+
+    @GetMapping("/{loginId}/user/next")
+    public Optional<WorkoutDay> getNextWorkoutByLoginId(@PathVariable Long loginId) {
+        // Get login information
+        Login login = loginRepository.findById(loginId)
+                .orElseThrow(() -> new NotFoundException("Login data not found with id " + loginId));
+
+        if (login.getWorkoutDayPlan() == null) {
+            throw new NotFoundException("Workout Day Plan was not found with Login id " + loginId);
+        }
+
+        WorkoutDayPlan workoutDayPlan = workoutDayPlanRepository.getOne(login.getWorkoutDayPlan().getId());
+
+        Optional<WorkoutDay> workoutDays = workoutDayPlan.getWorkoutDays()
+                .stream()
+                .findFirst()
+                .filter(workoutDay -> !workoutDay.isCompleted());
+
+        if (workoutDays.isEmpty()) {
+            throw new NotFoundException("No open workouts for user: " + login.getLoginName() + " / " + loginId);
+        }
+
+        return workoutDays;
     }
 
     @PostMapping("/{id}")
@@ -323,6 +349,7 @@ public class WorkoutDayPlanController {
         workoutDay.setCycle(cycle);
         workoutDay.setWeek(week);
         workoutDay.setDayNumber(day);
+        workoutDay.setCompleted(false);
         workoutDay.setExercise(defaultExercises.get(day - 1));
         workoutDay.setWorkoutDate(null);
         workoutDay.setWorkoutDayPlan(workoutDayPlan);
@@ -483,7 +510,7 @@ public class WorkoutDayPlanController {
         return modelMapper.map(workoutDayPlan, WorkoutDayPlanDto.class);
     }
 
-    private WorkoutDayPlanGetDto converToGetDto (WorkoutDayPlan workoutDayPlan){
+    private WorkoutDayPlanGetDto converToGetDto(WorkoutDayPlan workoutDayPlan) {
         WorkoutDayPlanGetDto workoutDayPlanGetDto = new WorkoutDayPlanGetDto();
 
         workoutDayPlanGetDto.setId(workoutDayPlan.getId());
@@ -548,6 +575,7 @@ public class WorkoutDayPlanController {
                     dayDto.setDay(workoutDays.get(iii).getDayNumber());
                     dayDto.setExercise(workoutDays.get(iii).getExercise().getName());
                     dayDto.setWorkoutDate(workoutDays.get(iii).getWorkoutDate());
+                    dayDto.setCompleted(workoutDays.get(iii).isCompleted());
                     dayDto.setSetDtos(toSetDto(workoutDays.get(iii).getWorkoutDaySets()));
                     dayDtoS.add(dayDto);
                 }
