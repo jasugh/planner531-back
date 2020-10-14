@@ -94,14 +94,14 @@ public class WorkoutDayPlanController {
 
         Optional<WorkoutDay> workoutDays = workoutDayPlan.getWorkoutDays()
                 .stream()
-                .findFirst()
-                .filter(workoutDay -> !workoutDay.isCompleted());
+                .filter(workoutDay -> !workoutDay.isCompleted())
+                .findFirst();
 
-        if (workoutDays.isEmpty()) {
+        if (workoutDays.isPresent()) {
+            return workoutDays;
+        } else {
             throw new NotFoundException("No open workouts for user: " + login.getLoginName() + " / " + loginId);
         }
-
-        return workoutDays;
     }
 
     @PostMapping("/{id}")
