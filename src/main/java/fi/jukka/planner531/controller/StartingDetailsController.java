@@ -7,6 +7,7 @@ import fi.jukka.planner531.model.Login;
 import fi.jukka.planner531.model.StartingDetails;
 import fi.jukka.planner531.repository.LoginRepository;
 import fi.jukka.planner531.repository.StartingDetailsRepository;
+import fi.jukka.planner531.repository.WorkoutDayPlanRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -21,20 +22,21 @@ import java.util.stream.Collectors;
 public class StartingDetailsController {
 
     private final StartingDetailsRepository startingDetailsRepository;
-    //    private final WorkoutDayPlanRepository workoutDayPlanRepository;
+    private final WorkoutDayPlanRepository workoutDayPlanRepository;
     private final LoginRepository loginRepository;
 
     private Throwable cause(String field) {
         return new Exception(field);
     }
+
     private static final ModelMapper modelMapper = new ModelMapper();
 
     @Autowired
     public StartingDetailsController(StartingDetailsRepository startingDetailsRepository,
-//                                     WorkoutDayPlanRepository workoutDayPlanRepository,
+                                     WorkoutDayPlanRepository workoutDayPlanRepository,
                                      LoginRepository loginRepository) {
         this.startingDetailsRepository = startingDetailsRepository;
-//        this.workoutDayPlanRepository = workoutDayPlanRepository;
+        this.workoutDayPlanRepository = workoutDayPlanRepository;
         this.loginRepository = loginRepository;
     }
 
@@ -165,25 +167,22 @@ public class StartingDetailsController {
     ResponseEntity<?> deleteOne(@PathVariable Long id) {
         StartingDetails startingDetails = startingDetailsRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Starting details not found with " + id));
-
+        Long workoutDayPlanId = (long) 0;
         if (startingDetails.getLogin() != null) {
             Login login = loginRepository.findById(startingDetails.getLogin().getId())
                     .orElseThrow(() -> new NotFoundException("Login not found with " + startingDetails.getLogin().getId()));
+
+            if(login.getWorkoutDayPlan() != null) {
+                workoutDayPlanId = login.getWorkoutDayPlan().getId();
+            }
             login.setStartingDetails(null);
             login.setWorkoutDayPlan(null);
             loginRepository.save(login);
         }
-
-//        if (startingDetails.getWorkoutDayPlan() != null) {
-//            WorkoutDayPlan oldWorkoutDayPlan = workoutDayPlanRepository.getOne(startingDetails.getWorkoutDayPlan().getId());
-//            oldWorkoutDayPlan.setStartingDetails(null);
-//            workoutDayPlanRepository.save(oldWorkoutDayPlan);
-//            workoutDayPlanRepository.deleteById(oldWorkoutDayPlan.getId());
-//        }
-//        startingDetails.setWorkoutDayPlan(null);
-//        startingDetailsRepository.save(startingDetails);
-//        startingDetailsRepository.deleteById(id);
-//
+        if(workoutDayPlanId != null) {
+            workoutDayPlanRepository.deleteById(workoutDayPlanId);
+        }
+        startingDetailsRepository.deleteById(id);
         return ResponseEntity.noContent().build();
     }
 

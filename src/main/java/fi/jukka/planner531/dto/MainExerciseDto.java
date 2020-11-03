@@ -1,6 +1,8 @@
 package fi.jukka.planner531.dto;
 
-public class ExerciseDto {
+import fi.jukka.planner531.model.MainExerciseHeader;
+
+public class MainExerciseDto {
     private Long id;
     private String name;
     private int restTime;
@@ -9,22 +11,21 @@ public class ExerciseDto {
     private int oneRmReps;
     private float oneRm;
     private String notes;
-    private Long categoryId;
-    private String categoryName;
 
-    public ExerciseDto() {
+
+    public MainExerciseDto() {
     }
 
-    public ExerciseDto(Long id,
-                       String name,
-                       int restTime,
-                       float weightIncrement,
-                       float oneRmKg,
-                       int oneRmReps,
-                       float oneRm,
-                       String notes,
-                       Long categoryId,
-                       String categoryName) {
+    public MainExerciseDto(
+            Long id,
+            String name,
+            int restTime,
+            float weightIncrement,
+            float oneRmKg,
+            int oneRmReps,
+            float oneRm,
+            String notes
+    ) {
         this.id = id;
         this.name = name;
         this.restTime = restTime;
@@ -33,8 +34,6 @@ public class ExerciseDto {
         this.oneRmReps = oneRmReps;
         this.oneRm = oneRm;
         this.notes = notes;
-        this.categoryId = categoryId;
-        this.categoryName = categoryName;
     }
 
     public Long getId() {
@@ -101,17 +100,4 @@ public class ExerciseDto {
         this.notes = notes;
     }
 
-    public Long getCategoryId() {
-        return categoryId;
-    }
-
-    public void setCategoryId(Long categoryId) {
-        this.categoryId = categoryId;
-    }
-
-    public String getCategoryName() {  return categoryName; }
-
-    public void setCategoryName(String categoryName) {
-        this.categoryName = categoryName;
-    }
 }

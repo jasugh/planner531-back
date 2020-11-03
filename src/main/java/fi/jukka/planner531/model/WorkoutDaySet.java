@@ -20,5 +20,5 @@ public class WorkoutDaySet {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JsonBackReference
-    private WorkoutDay workoutDay;
+    private WorkoutDayExercise workoutDayExercise;
 }

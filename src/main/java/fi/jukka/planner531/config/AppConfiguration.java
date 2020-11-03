@@ -23,6 +23,8 @@ public class AppConfiguration {
     private final LoginRepository loginRepository;
     private final CategoryRepository categoryRepository;
     private final ExerciseRepository exerciseRepository;
+    private final MainExerciseRepository mainExerciseHeaderReporitory;
+    private final MainExerciseRepository mainExerciseRepository;
     private final JwtUserDetailsService jwtUserDetailsService;
     private final CategoryController categoryController;
     private final ExerciseController exerciseController;
@@ -31,12 +33,17 @@ public class AppConfiguration {
             LoginRepository loginRepository,
             CategoryRepository categoryRepository,
             ExerciseRepository exerciseRepository,
+            ExerciseRepository exerciseRepository1,
+            MainExerciseRepository mainExerciseHeaderReporitory,
+            MainExerciseRepository mainExerciseRepository,
             JwtUserDetailsService jwtUserDetailsService,
             CategoryController categoryController,
             ExerciseController exerciseController) {
         this.loginRepository = loginRepository;
         this.categoryRepository = categoryRepository;
-        this.exerciseRepository = exerciseRepository;
+        this.exerciseRepository = exerciseRepository1;
+        this.mainExerciseHeaderReporitory = mainExerciseHeaderReporitory;
+        this.mainExerciseRepository = mainExerciseRepository;
         this.jwtUserDetailsService = jwtUserDetailsService;
         this.categoryController = categoryController;
         this.exerciseController = exerciseController;
@@ -51,8 +58,10 @@ public class AppConfiguration {
                 LoginDto newLoginDTO = new LoginDto();
                 newLoginDTO.setLoginName("admin");
                 newLoginDTO.setPassword(secret);
-                jwtUserDetailsService.save(newLoginDTO);
+                login = jwtUserDetailsService.save(newLoginDTO);
             }
+
+            MainExerciseHeader mainExerciseHeader = login.getMainExerciseHeader();
 
             if (categoryRepository.findFirstByName("Shoulders") == null) {
                 createCategory("Shoulders");
@@ -67,29 +76,70 @@ public class AppConfiguration {
                 createCategory("Legs");
             }
 
-            if (exerciseRepository.findFirstByName("Overhead Press") == null) {
+            if (exerciseRepository.findFirstByName("Dumbbell Lateral Raise") == null) {
                 createExercise(
-                        "Overhead Press",
+                        "Dumbbell Lateral Raise",
                         (float) 2.5,
                         categoryRepository.findFirstByName("Shoulders").getId());
             }
-            if (exerciseRepository.findFirstByName("Dead Lift") == null) {
+            if (exerciseRepository.findFirstByName("Dumbbell Row") == null) {
                 createExercise(
-                        "Dead Lift",
+                        "Dumbbell Row",
                         (float) 5.0,
                         categoryRepository.findFirstByName("Back").getId());
             }
-            if (exerciseRepository.findFirstByName("Bench Press") == null) {
+            if (exerciseRepository.findFirstByName("Close-grip bench press") == null) {
                 createExercise(
-                        "Bench Press",
+                        "Close-grip bench press",
                         (float) 2.5,
                         categoryRepository.findFirstByName("Chest").getId());
             }
-            if (exerciseRepository.findFirstByName("Squat") == null) {
+            if (exerciseRepository.findFirstByName("Front Squat") == null) {
                 createExercise(
-                        "Squat",
+                        "Front Squat",
                         (float) 5.0,
                         categoryRepository.findFirstByName("Legs").getId());
+            }
+
+            if (mainExerciseRepository.findFirstByName("Overhead Press") == null) {
+                createMainExercise(
+                        "Overhead Press",
+                        (float) 2.5,
+                        (float) 50,
+                        1,
+                        (float) 50,
+                        1,
+                        mainExerciseHeader);
+            }
+            if (mainExerciseRepository.findFirstByName("Dead Lift") == null) {
+                createMainExercise(
+                        "Dead Lift",
+                        (float) 5.0,
+                        (float) 120,
+                        2,
+                        (float) 128,
+                        2,
+                        mainExerciseHeader);
+            }
+            if (mainExerciseRepository.findFirstByName("Bench Press") == null) {
+                createMainExercise(
+                        "Bench Press", (
+                                float) 2.5,
+                        (float) 75,
+                        1,
+                        (float) 75,
+                        3,
+                        mainExerciseHeader);
+            }
+            if (mainExerciseRepository.findFirstByName("Squat") == null) {
+                createMainExercise(
+                        "Squat",
+                        (float) 5.0,
+                        (float) 80,
+                        1,
+                        (float) 80,
+                        4,
+                        mainExerciseHeader);
             }
         };
     }
@@ -106,10 +156,34 @@ public class AppConfiguration {
         newExercise.setName(exerciseName);
         newExercise.setRestTime(120);
         newExercise.setWeightIncrement(weightIncrement);
+        newExercise.setOneRmKg(0);
+        newExercise.setOneRmReps(0);
+        newExercise.setOneRm(0);
         newExercise.setNotes("");
         newExercise.setCategoryId(categoryId);
         exerciseController.saveExercise(newExercise);
     }
+
+    void createMainExercise(
+            String mainExerciseName,
+            float weightIncrement,
+            float oneRmKg,
+            int oneRmReps,
+            float oneRm,
+            int exerciseNumber,
+            MainExerciseHeader mainExerciseHeader
+    ) {
+        MainExercise newMainExercise = new MainExercise();
+        newMainExercise.setName(mainExerciseName);
+        newMainExercise.setRestTime(120);
+        newMainExercise.setWeightIncrement(weightIncrement);
+        newMainExercise.setOneRmKg(oneRmKg);
+        newMainExercise.setOneRmReps(oneRmReps);
+        newMainExercise.setOneRm(oneRm);
+        newMainExercise.setNotes("");
+        newMainExercise.setExerciseNumber(exerciseNumber);
+        newMainExercise.setMainExerciseHeader(mainExerciseHeader);
+        mainExerciseRepository.save(newMainExercise);
+        mainExerciseHeader.getMainExercises().add(newMainExercise);
+    }
 }
-
-

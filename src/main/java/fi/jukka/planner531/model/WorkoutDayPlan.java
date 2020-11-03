@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import java.time.LocalDate;
@@ -22,7 +21,7 @@ public class WorkoutDayPlan {
     private LocalDate startingDate;
 
     @OneToOne(mappedBy = "workoutDayPlan")
-    @JsonBackReference
+    @JsonBackReference(value = "login-workoutdayplan")
     private Login login;
 
     @OneToMany(cascade = CascadeType.REMOVE, mappedBy = "workoutDayPlan", fetch = FetchType.LAZY)

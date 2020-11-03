@@ -22,15 +22,16 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/plan")
 public class WorkoutDayPlanController {
 
-    private final WorkoutDayPlanRepository workoutDayPlanRepository;
-    private final WorkoutDayRepository workoutDayRepository;
-    private final StartingDetailsRepository startingDetailsRepository;
-    private final CategoryRepository categoryRepository;
-    private final ExerciseRepository exerciseRepository;
     private final CategoryController categoryController;
     private final ExerciseController exerciseController;
-    private final WorkoutDaySetRepository workoutDaySetRepository;
+    private final CategoryRepository categoryRepository;
+    private final ExerciseRepository exerciseRepository;
     private final LoginRepository loginRepository;
+    private final StartingDetailsRepository startingDetailsRepository;
+    private final WorkoutDayPlanRepository workoutDayPlanRepository;
+    private final WorkoutDayRepository workoutDayRepository;
+    private final WorkoutDayExerciseRepository workoutDayExerciseRepository;
+    private final WorkoutDaySetRepository workoutDaySetRepository;
 
     private Throwable cause(String field) {
         return new Exception(field);
@@ -39,24 +40,29 @@ public class WorkoutDayPlanController {
     private static final ModelMapper modelMapper = new ModelMapper();
 
     @Autowired
-    public WorkoutDayPlanController(WorkoutDayPlanRepository workoutDayPlanRepository,
-                                    WorkoutDayRepository workoutDayRepository,
-                                    StartingDetailsRepository startingDetailsRepository,
-                                    CategoryRepository categoryRepository,
-                                    ExerciseRepository exerciseRepository,
-                                    CategoryController categoryController,
-                                    ExerciseController exerciseController,
-                                    WorkoutDaySetRepository workoutDaySetRepository,
-                                    LoginRepository loginRepository) {
-        this.workoutDayPlanRepository = workoutDayPlanRepository;
-        this.workoutDayRepository = workoutDayRepository;
-        this.startingDetailsRepository = startingDetailsRepository;
-        this.categoryRepository = categoryRepository;
-        this.exerciseRepository = exerciseRepository;
+    public WorkoutDayPlanController(
+            CategoryController categoryController,
+            ExerciseController exerciseController,
+            CategoryRepository
+                    categoryRepository,
+            ExerciseRepository exerciseRepository,
+            LoginRepository loginRepository,
+            StartingDetailsRepository startingDetailsRepository,
+            WorkoutDayPlanRepository workoutDayPlanRepository,
+            WorkoutDayRepository workoutDayRepository,
+            WorkoutDayExerciseRepository workoutDayExerciseRepository,
+            WorkoutDaySetRepository workoutDaySetRepository
+    ) {
         this.categoryController = categoryController;
         this.exerciseController = exerciseController;
-        this.workoutDaySetRepository = workoutDaySetRepository;
+        this.categoryRepository = categoryRepository;
+        this.exerciseRepository = exerciseRepository;
         this.loginRepository = loginRepository;
+        this.startingDetailsRepository = startingDetailsRepository;
+        this.workoutDayPlanRepository = workoutDayPlanRepository;
+        this.workoutDayRepository = workoutDayRepository;
+        this.workoutDayExerciseRepository = workoutDayExerciseRepository;
+        this.workoutDaySetRepository = workoutDaySetRepository;
     }
 
     @GetMapping("/{id}/plan")
@@ -64,7 +70,7 @@ public class WorkoutDayPlanController {
         WorkoutDayPlan workoutDayPlan = workoutDayPlanRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("WorkoutDayPlan not found with id: " + id));
 
-        return converToGetDto(workoutDayPlan);
+        return convertToGetDto(workoutDayPlan);
     }
 
     @GetMapping("/{loginId}/user")
@@ -76,12 +82,12 @@ public class WorkoutDayPlanController {
         if (login.getWorkoutDayPlan() == null) {
             throw new NotFoundException("Workout Day Plan was not found with Login id " + loginId);
         }
-        return converToGetDto(workoutDayPlanRepository
+        return convertToGetDto(workoutDayPlanRepository
                 .getOne(login.getWorkoutDayPlan().getId()));
     }
 
     @GetMapping("/{loginId}/user/next")
-    public Optional<WorkoutDay> getNextWorkoutByLoginId(@PathVariable Long loginId) {
+    public WorkoutDay getNextWorkoutByLoginId(@PathVariable Long loginId) {
         // Get login information
         Login login = loginRepository.findById(loginId)
                 .orElseThrow(() -> new NotFoundException("Login data not found with id " + loginId));
@@ -98,10 +104,30 @@ public class WorkoutDayPlanController {
                 .findFirst();
 
         if (workoutDays.isPresent()) {
-            return workoutDays;
+            return workoutDays.get();
         } else {
             throw new NotFoundException("No open workouts for user: " + login.getLoginName() + " / " + loginId);
         }
+    }
+
+    @PutMapping("/{id}/skip")
+    public WorkoutDay skipWorkout(@PathVariable Long id) {
+        WorkoutDay workoutDay = workoutDayRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Workout not found with id " + id));
+
+        workoutDay.setCompleted(true);
+        workoutDayRepository.save(workoutDay);
+        return workoutDay;
+    }
+
+    @PutMapping("/{id}/complete")
+    public WorkoutDay completeWorkout(@PathVariable Long id) {
+        WorkoutDay workoutDay = workoutDayRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Workout not found with id " + id));
+
+        workoutDay.setCompleted(true);
+        workoutDayRepository.save(workoutDay);
+        return workoutDay;
     }
 
     @PostMapping("/{id}")
@@ -112,7 +138,6 @@ public class WorkoutDayPlanController {
         if (startingDetails.getLogin() == null) {
             throw new NotFoundException("There are no Login in Starting Details with id " + id);
         }
-
         Login login = startingDetails.getLogin();
         if (login.getWorkoutDayPlan() != null) {
             Long workoutDayPlanId = login.getWorkoutDayPlan().getId();
@@ -124,9 +149,9 @@ public class WorkoutDayPlanController {
         // Create a new Workout Plan
         WorkoutDayPlan workoutDayPlan = new WorkoutDayPlan();
         workoutDayPlan.setStartingDate(startingDetails.getStartingDate());
-        workoutDayPlanRepository.save(workoutDayPlan);
+        WorkoutDayPlan newWorkoutDayPlan = workoutDayPlanRepository.save(workoutDayPlan);
 
-        login.setWorkoutDayPlan(workoutDayPlan);
+        login.setWorkoutDayPlan(newWorkoutDayPlan);
         loginRepository.save(login);
 
         // Create individual exercises for each workout day
@@ -173,135 +198,158 @@ public class WorkoutDayPlanController {
             while (week <= 4) {
 
                 switch (week) {
-                    case 1, 4 -> {
+                    case 1:
+                    case 4: {
                         main1Reps = 5;
                         main2Reps = 5;
                         main3Reps = 5;
+                        break;
                     }
-                    case 2 -> {
+                    case 2: {
                         main1Reps = 3;
                         main2Reps = 3;
                         main3Reps = 3;
+                        break;
                     }
-                    case 3 -> {
+                    case 3: {
                         main1Reps = 5;
                         main2Reps = 3;
                         main3Reps = 1;
+                        break;
                     }
                 }
                 while (day <= 4) {
 
                     // day numbers always correspond to exercises (1,2,3,4)
                     switch (day) {
-                        case 1 -> {
+                        case 1: {
                             warmup1Kg = roundKgs(pressKg * 0.4f);
                             warmup2Kg = roundKgs(pressKg * 0.5f);
                             warmup3Kg = roundKgs(pressKg * 0.6f);
                             bbbKg = roundKgs(pressKg * 0.65f);
                             switch (week) {
-                                case 1 -> {
+                                case 1: {
                                     main1Kg = roundKgs(pressKg * 0.65f);
                                     main2Kg = roundKgs(pressKg * 0.75f);
                                     main3Kg = roundKgs(pressKg * 0.85f);
+                                    break;
                                 }
-                                case 2 -> {
+                                case 2: {
                                     main1Kg = roundKgs(pressKg * 0.70f);
                                     main2Kg = roundKgs(pressKg * 0.80f);
                                     main3Kg = roundKgs(pressKg * 0.90f);
+                                    break;
                                 }
-                                case 3 -> {
+                                case 3: {
                                     main1Kg = roundKgs(pressKg * 0.75f);
                                     main2Kg = roundKgs(pressKg * 0.85f);
                                     main3Kg = roundKgs(pressKg * 0.95f);
+                                    break;
                                 }
-                                case 4 -> {
+                                case 4: {
                                     main1Kg = roundKgs(pressKg * 0.40f);
                                     main2Kg = roundKgs(pressKg * 0.50f);
                                     main3Kg = roundKgs(pressKg * 0.60f);
+                                    break;
                                 }
                             }
                         }
-                        case 2 -> {
+                        break;
+                        case 2: {
                             warmup1Kg = roundKgs(deadLiftKg * 0.4f);
                             warmup2Kg = roundKgs(deadLiftKg * 0.5f);
                             warmup3Kg = roundKgs(deadLiftKg * 0.6f);
                             bbbKg = roundKgs(deadLiftKg * 0.65f);
                             switch (week) {
-                                case 1 -> {
+                                case 1: {
                                     main1Kg = roundKgs(deadLiftKg * 0.65f);
                                     main2Kg = roundKgs(deadLiftKg * 0.75f);
                                     main3Kg = roundKgs(deadLiftKg * 0.85f);
+                                    break;
                                 }
-                                case 2 -> {
+                                case 2: {
                                     main1Kg = roundKgs(deadLiftKg * 0.70f);
                                     main2Kg = roundKgs(deadLiftKg * 0.80f);
                                     main3Kg = roundKgs(deadLiftKg * 0.90f);
+                                    break;
                                 }
-                                case 3 -> {
+                                case 3: {
                                     main1Kg = roundKgs(deadLiftKg * 0.75f);
                                     main2Kg = roundKgs(deadLiftKg * 0.85f);
                                     main3Kg = roundKgs(deadLiftKg * 0.95f);
+                                    break;
                                 }
-                                case 4 -> {
+                                case 4: {
                                     main1Kg = roundKgs(deadLiftKg * 0.40f);
                                     main2Kg = roundKgs(deadLiftKg * 0.50f);
                                     main3Kg = roundKgs(deadLiftKg * 0.60f);
+                                    break;
                                 }
                             }
                         }
-                        case 3 -> {
+                        break;
+                        case 3: {
                             warmup1Kg = roundKgs(benchPressKg * 0.4f);
                             warmup2Kg = roundKgs(benchPressKg * 0.5f);
                             warmup3Kg = roundKgs(benchPressKg * 0.6f);
                             bbbKg = roundKgs(benchPressKg * 0.65f);
                             switch (week) {
-                                case 1 -> {
+                                case 1: {
                                     main1Kg = roundKgs(benchPressKg * 0.65f);
                                     main2Kg = roundKgs(benchPressKg * 0.75f);
                                     main3Kg = roundKgs(benchPressKg * 0.85f);
+                                    break;
                                 }
-                                case 2 -> {
+                                case 2: {
                                     main1Kg = roundKgs(benchPressKg * 0.70f);
                                     main2Kg = roundKgs(benchPressKg * 0.80f);
                                     main3Kg = roundKgs(benchPressKg * 0.90f);
+                                    break;
                                 }
-                                case 3 -> {
+                                case 3: {
                                     main1Kg = roundKgs(benchPressKg * 0.75f);
                                     main2Kg = roundKgs(benchPressKg * 0.85f);
                                     main3Kg = roundKgs(benchPressKg * 0.95f);
+                                    break;
                                 }
-                                case 4 -> {
+                                case 4: {
                                     main1Kg = roundKgs(benchPressKg * 0.40f);
                                     main2Kg = roundKgs(benchPressKg * 0.50f);
                                     main3Kg = roundKgs(benchPressKg * 0.60f);
+                                    break;
                                 }
                             }
                         }
-                        case 4 -> {
+                        break;
+                        case 4: {
                             warmup1Kg = roundKgs(squatKg * 0.4f);
                             warmup2Kg = roundKgs(squatKg * 0.5f);
                             warmup3Kg = roundKgs(squatKg * 0.6f);
                             bbbKg = roundKgs(squatKg * 0.65f);
                             switch (week) {
-                                case 1 -> {
+                                case 1: {
                                     main1Kg = roundKgs(squatKg * 0.65f);
                                     main2Kg = roundKgs(squatKg * 0.75f);
                                     main3Kg = roundKgs(squatKg * 0.85f);
+                                    break;
                                 }
-                                case 2 -> {
+                                case 2: {
                                     main1Kg = roundKgs(squatKg * 0.70f);
                                     main2Kg = roundKgs(squatKg * 0.80f);
                                     main3Kg = roundKgs(squatKg * 0.90f);
+                                    break;
                                 }
-                                case 3 -> {
+                                case 3: {
                                     main1Kg = roundKgs(squatKg * 0.75f);
                                     main2Kg = roundKgs(squatKg * 0.85f);
                                     main3Kg = roundKgs(squatKg * 0.95f);
+                                    break;
                                 }
-                                case 4 -> {
+                                case 4: {
                                     main1Kg = roundKgs(squatKg * 0.40f);
                                     main2Kg = roundKgs(squatKg * 0.50f);
                                     main3Kg = roundKgs(squatKg * 0.60f);
+                                    break;
                                 }
                             }
                         }
@@ -350,20 +398,25 @@ public class WorkoutDayPlanController {
         workoutDay.setWeek(week);
         workoutDay.setDayNumber(day);
         workoutDay.setCompleted(false);
-        workoutDay.setExercise(defaultExercises.get(day - 1));
         workoutDay.setWorkoutDate(null);
         workoutDay.setWorkoutDayPlan(workoutDayPlan);
         workoutDayRepository.save(workoutDay);
 
-//        workoutDayPlan.getWorkoutDays().add(workoutDay);
-//        workoutDayPlanRepository.save(workoutDayPlan);
+        WorkoutDayExercise workoutDayExercise = createExercise(defaultExercises.get(day - 1), workoutDay);
 
-        createWarmUpSets(warmUpKgs, workoutDay);
-        createMainSets(mainKgs, mainReps, workoutDay);
-        createBBBSets(bbbKg, workoutDay);
+        createWarmUpSets(warmUpKgs, workoutDayExercise);
+        createMainSets(mainKgs, mainReps, workoutDayExercise);
+        createBBBSets(bbbKg, workoutDayExercise);
     }
 
-    public void createWarmUpSets(float[] warmUpKgs, WorkoutDay workoutDay) {
+    public WorkoutDayExercise createExercise(Exercise exercise, WorkoutDay workoutDay) {
+        WorkoutDayExercise workoutDayExercise = new WorkoutDayExercise();
+        workoutDayExercise.setExercise(exercise);
+        workoutDayExercise.setWorkoutDay(workoutDay);
+        return workoutDayExerciseRepository.save(workoutDayExercise);
+    }
+
+    public void createWarmUpSets(float[] warmUpKgs, WorkoutDayExercise workoutDayExercise) {
         int i;
         for (i = 1; i < 4; i++) {
             WorkoutDaySet workoutDaySet = new WorkoutDaySet();
@@ -374,15 +427,12 @@ public class WorkoutDayPlanController {
             }
             workoutDaySet.setFinished(false);
             workoutDaySet.setTypeOfSet("W");
-            workoutDaySet.setWorkoutDay(workoutDay);
+            workoutDaySet.setWorkoutDayExercise(workoutDayExercise);
             workoutDaySetRepository.save(workoutDaySet);
-
-//            workoutDay.getWorkoutDaySets().add(workoutDaySet);
-//            workoutDayRepository.save(workoutDay);
         }
     }
 
-    public void createMainSets(float[] mainKgs, int[] mainReps, WorkoutDay workoutDay) {
+    public void createMainSets(float[] mainKgs, int[] mainReps, WorkoutDayExercise workoutDayExercise) {
         int i;
         for (i = 1; i < 4; i++) {
             WorkoutDaySet workoutDaySet = new WorkoutDaySet();
@@ -390,15 +440,12 @@ public class WorkoutDayPlanController {
             workoutDaySet.setReps(mainReps[i - 1]);
             workoutDaySet.setFinished(false);
             workoutDaySet.setTypeOfSet("M");
-            workoutDaySet.setWorkoutDay(workoutDay);
+            workoutDaySet.setWorkoutDayExercise(workoutDayExercise);
             workoutDaySetRepository.save(workoutDaySet);
-
-//            workoutDay.getWorkoutDaySets().add(workoutDaySet);
-//            workoutDayRepository.save(workoutDay);
         }
     }
 
-    public void createBBBSets(float bbbKg, WorkoutDay workoutDay) {
+    public void createBBBSets(float bbbKg, WorkoutDayExercise workoutDayExercise) {
         int i;
         for (i = 1; i < 6; i++) {
             WorkoutDaySet workoutDaySet = new WorkoutDaySet();
@@ -406,11 +453,8 @@ public class WorkoutDayPlanController {
             workoutDaySet.setReps(10);
             workoutDaySet.setTypeOfSet("B");
             workoutDaySet.setFinished(false);
-            workoutDaySet.setWorkoutDay(workoutDay);
+            workoutDaySet.setWorkoutDayExercise(workoutDayExercise);
             workoutDaySetRepository.save(workoutDaySet);
-
-//            workoutDay.getWorkoutDaySets().add(workoutDaySet);
-//            workoutDayRepository.save(workoutDay);
         }
     }
 
@@ -499,18 +543,13 @@ public class WorkoutDayPlanController {
         Login login = loginRepository.findById(workoutDayPlan.getLogin().getId())
                 .orElseThrow(() -> new NotFoundException("Login not found with id " + workoutDayPlan.getLogin().getId()));
         login.setWorkoutDayPlan(null);
-//        login.setStartingDetails(null);
         loginRepository.save(login);
 
         workoutDayPlanRepository.deleteById(id);
         return ResponseEntity.noContent().build();
     }
 
-    private WorkoutDayPlanDto convertToDto(WorkoutDayPlan workoutDayPlan) {
-        return modelMapper.map(workoutDayPlan, WorkoutDayPlanDto.class);
-    }
-
-    private WorkoutDayPlanGetDto converToGetDto(WorkoutDayPlan workoutDayPlan) {
+    private WorkoutDayPlanGetDto convertToGetDto(WorkoutDayPlan workoutDayPlan) {
         WorkoutDayPlanGetDto workoutDayPlanGetDto = new WorkoutDayPlanGetDto();
 
         workoutDayPlanGetDto.setId(workoutDayPlan.getId());
@@ -573,15 +612,27 @@ public class WorkoutDayPlanController {
 
                     DayDto dayDto = new DayDto();
                     dayDto.setDay(workoutDays.get(iii).getDayNumber());
-                    dayDto.setExercise(workoutDays.get(iii).getExercise().getName());
                     dayDto.setWorkoutDate(workoutDays.get(iii).getWorkoutDate());
                     dayDto.setCompleted(workoutDays.get(iii).isCompleted());
-                    dayDto.setSetDtos(toSetDto(workoutDays.get(iii).getWorkoutDaySets()));
+                    dayDto.setDayExerciseDtos(toDayExerciseDto(workoutDays.get(iii).getWorkoutDayExercises()));
                     dayDtoS.add(dayDto);
                 }
             }
         }
         return dayDtoS;
+    }
+
+    private List<DayExerciseDto> toDayExerciseDto(List<WorkoutDayExercise> workoutDayExercises) {
+        List<DayExerciseDto> dayExerciseDtos = new ArrayList<>();
+        int i;
+
+        for (i = 0; i < workoutDayExercises.size(); i++) {
+            DayExerciseDto dayExerciseDto = new DayExerciseDto();
+            dayExerciseDto.setExercise(workoutDayExercises.get(i).getExercise().getName());
+            dayExerciseDto.setSetDtos(toSetDto(workoutDayExercises.get(i).getWorkoutDaySets()));
+            dayExerciseDtos.add(dayExerciseDto);
+        }
+        return dayExerciseDtos;
     }
 
     private List<SetDto> toSetDto(List<WorkoutDaySet> workoutDaySets) {

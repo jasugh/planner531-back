@@ -6,20 +6,18 @@ import java.util.List;
 
 public class DayDto {
     private int day;
-    private String exercise;
     private LocalDate workoutDate;
     private boolean completed;
-    private List<SetDto> setDtos = new ArrayList<>();
+    private List<DayExerciseDto> dayExerciseDtos = new ArrayList<>();
 
     public DayDto() {
     }
 
-    public DayDto(int day, String exercise, LocalDate workoutDate, boolean completed, List<SetDto> setDtos) {
+    public DayDto(int day, LocalDate workoutDate, boolean completed, List<DayExerciseDto> dayExerciseDtos) {
         this.day = day;
-        this.exercise = exercise;
         this.workoutDate = workoutDate;
         this.completed = completed;
-        this.setDtos = setDtos;
+        this.dayExerciseDtos = dayExerciseDtos;
     }
 
     public int getDay() {
@@ -28,14 +26,6 @@ public class DayDto {
 
     public void setDay(int day) {
         this.day = day;
-    }
-
-    public String getExercise() {
-        return exercise;
-    }
-
-    public void setExercise(String exercise) {
-        this.exercise = exercise;
     }
 
     public LocalDate getWorkoutDate() {
@@ -54,11 +44,11 @@ public class DayDto {
         this.completed = completed;
     }
 
-    public List<SetDto> getSetDtos() {
-        return setDtos;
+    public List<DayExerciseDto> getDayExerciseDtos() {
+        return dayExerciseDtos;
     }
 
-    public void setSetDtos(List<SetDto> setDtos) {
-        this.setDtos = setDtos;
+    public void setDayExerciseDtos(List<DayExerciseDto> dayExerciseDtos) {
+        this.dayExerciseDtos = dayExerciseDtos;
     }
 }

@@ -25,10 +25,14 @@ public class Login {
     private List<Role> roles =  new ArrayList<>();
 
     @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.REMOVE)
-    @JsonManagedReference
+    @JsonManagedReference(value = "login-mainExerciseHeader")
+    private MainExerciseHeader mainExerciseHeader;
+
+    @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.REMOVE)
+    @JsonManagedReference(value = "login-startingdetails")
     private StartingDetails startingDetails;
 
     @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.REMOVE)
-    @JsonBackReference
+    @JsonManagedReference(value = "login-workoutdayplan")
     private WorkoutDayPlan  workoutDayPlan;
 }

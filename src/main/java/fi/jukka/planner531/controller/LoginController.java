@@ -63,7 +63,7 @@ public class LoginController {
     @GetMapping("/{id}/id")
     public LoginGetDto getOne(@PathVariable Long id) {
         return convertToDTO(loginRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Login not found with " + id)));
+                .orElseThrow(() -> new NotFoundException("Login not found with id " + id)));
     }
 
     @GetMapping("/{name}/name")
@@ -77,7 +77,7 @@ public class LoginController {
 
     @PostMapping("/register")
     public LoginGetDto register(@RequestBody LoginDto loginDTO) {
-        if (loginDTO.getLoginName().isBlank()) {
+        if (loginDTO.getLoginName().isEmpty()) {
             throw new BadRequestException("Username can not be blank", cause("loginName"));
         }
         if (!checkPasswordLength(loginDTO.getPassword())) {

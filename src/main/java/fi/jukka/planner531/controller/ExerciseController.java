@@ -43,12 +43,13 @@ public class ExerciseController {
 
     @GetMapping("/{id}")
     public ExerciseDto getExerciseById(@PathVariable Long id) {
-        return convertToDTO(exerciseRepository.getOne(id));
+        return convertToDTO(exerciseRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Exercise not found with id " + id)));
     }
 
     @PostMapping("")
     public ExerciseDto saveExercise(@RequestBody ExerciseDto exerciseDto) {
-        if (exerciseDto.getName().isBlank()) {
+        if (exerciseDto.getName().isEmpty()) {
             throw new BadRequestException("Exercise name can not be blank", cause());
         }
         if (exerciseRepository.findFirstByName(exerciseDto.getName()) != null) {
@@ -61,6 +62,9 @@ public class ExerciseController {
         newExercise.setName(exerciseDto.getName());
         newExercise.setRestTime(exerciseDto.getRestTime());
         newExercise.setWeightIncrement(exerciseDto.getWeightIncrement());
+        newExercise.setOneRmKg(exerciseDto.getOneRmKg());
+        newExercise.setOneRmReps(exerciseDto.getOneRmReps());
+        newExercise.setOneRm(exerciseDto.getOneRm());
         newExercise.setNotes(exerciseDto.getNotes());
         newExercise.setCategory(category);
 
@@ -69,7 +73,7 @@ public class ExerciseController {
 
     @PutMapping(value = "/{id}")
     public ExerciseDto replaceExercise(@RequestBody Exercise exercise, @PathVariable Long id) {
-        if (exercise.getName().isBlank()) {
+        if (exercise.getName().isEmpty()) {
             throw new BadRequestException("Exercise name can not be blank", cause());
         }
         Exercise exc = exerciseRepository.findFirstByName(exercise.getName());
@@ -82,6 +86,9 @@ public class ExerciseController {
                     changedExercise.setName(exercise.getName());
                     changedExercise.setRestTime(exercise.getRestTime());
                     changedExercise.setWeightIncrement(exercise.getWeightIncrement());
+                    changedExercise.setOneRmKg(exercise.getOneRmKg());
+                    changedExercise.setOneRmReps(exercise.getOneRmReps());
+                    changedExercise.setOneRm(exercise.getOneRm());
                     changedExercise.setNotes(exercise.getNotes());
                     if (exercise.getCategory() != null) {
                         Category category = categoryRepository.findById(exercise.getCategory().getId())
@@ -90,7 +97,7 @@ public class ExerciseController {
                     }
                     return convertToDTO(exerciseRepository.save(changedExercise));
                 })
-                .orElseThrow(() -> new NotFoundException("Exercise was not updated with id: " + id));
+                .orElseThrow(() -> new NotFoundException("Exercise was not updated with id " + id));
     }
 
     @DeleteMapping("/{id}")

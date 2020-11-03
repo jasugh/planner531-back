@@ -3,6 +3,8 @@ package fi.jukka.planner531.service;
 import java.util.*;
 
 import fi.jukka.planner531.exception.NotFoundException;
+import fi.jukka.planner531.model.MainExerciseHeader;
+import fi.jukka.planner531.repository.MainExerciseHeaderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -23,15 +25,18 @@ public class JwtUserDetailsService implements UserDetailsService {
 
     private final LoginRepository loginRepository;
     private final RoleRepository roleRepository;
+    private final MainExerciseHeaderRepository mainExerciseHeaderRepository;
 
     @Autowired
     private PasswordEncoder bcryptEncoder;
 
     @Autowired
     public JwtUserDetailsService(LoginRepository loginRepository,
-                                 RoleRepository roleRepository) {
+                                 RoleRepository roleRepository,
+                                 MainExerciseHeaderRepository mainExerciseHeaderRepository) {
         this.loginRepository = loginRepository;
         this.roleRepository = roleRepository;
+        this.mainExerciseHeaderRepository = mainExerciseHeaderRepository;
     }
 
     @Override
@@ -69,6 +74,10 @@ public class JwtUserDetailsService implements UserDetailsService {
             role.setName("USER");
             roleRepository.save(role);
         }
+
+        MainExerciseHeader newMainExerciseHeader = new MainExerciseHeader();
+        mainExerciseHeaderRepository.save(newMainExerciseHeader);
+
         Login newLogin = new Login();
         Role role = roleRepository.findFirstByName("USER");
         if(login.getLoginName().equals("admin")){
@@ -77,6 +86,7 @@ public class JwtUserDetailsService implements UserDetailsService {
         newLogin.getRoles().add(role);
         newLogin.setLoginName(login.getLoginName().toLowerCase());
         newLogin.setPassword(bcryptEncoder.encode(login.getPassword()));
+        newLogin.setMainExerciseHeader(newMainExerciseHeader);
         return loginRepository.save(newLogin);
     }
 }

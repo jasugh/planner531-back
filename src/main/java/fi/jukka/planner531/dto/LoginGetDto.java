@@ -7,16 +7,24 @@ public class LoginGetDto {
     private long id;
     private String loginName;
     private List<RoleDto> roles = new ArrayList<>();
+    private long mainExercisesId;
     private Long startingDetailsId;
     private Long workoutDayPlanId;
 
     public LoginGetDto() {
     }
 
-    public LoginGetDto(long id, String loginName, List<RoleDto> roles, Long startingDetailsId, Long workoutDayPlanId) {
+    public LoginGetDto(
+            long id,
+            String loginName,
+            List<RoleDto> roles,
+            Long mainExercisesId,
+            Long startingDetailsId,
+            Long workoutDayPlanId) {
         this.id = id;
         this.loginName = loginName;
         this.roles = roles;
+        this.mainExercisesId = mainExercisesId;
         this.startingDetailsId = startingDetailsId;
         this.workoutDayPlanId = workoutDayPlanId;
     }
@@ -43,6 +51,14 @@ public class LoginGetDto {
 
     public void setRoles(List<RoleDto> roles) {
         this.roles = roles;
+    }
+
+    public long getMainExercisesId() {
+        return mainExercisesId;
+    }
+
+    public void setMainExercisesId(long mainExercisesId) {
+        this.mainExercisesId = mainExercisesId;
     }
 
     public Long getStartingDetailsId() {

@@ -49,7 +49,7 @@ public class CategoryController {
     @PostMapping("")
     public CategoryDto saveCategory(@RequestBody CategoryDto categoryDto) {
 
-        if (categoryDto.getName().isBlank()) {
+        if (categoryDto.getName().isEmpty()) {
             throw new BadRequestException("Category name can not be blank", cause("name"));
         }
 
@@ -67,7 +67,7 @@ public class CategoryController {
 
     @PutMapping("/{id}")
     public CategoryDto replaceCategory(@RequestBody Category category, @PathVariable Long id) {
-        if (category.getName().isBlank()) {
+        if (category.getName().isEmpty()) {
             throw new BadRequestException("Category name can not be blank", cause("name"));
         }
 
