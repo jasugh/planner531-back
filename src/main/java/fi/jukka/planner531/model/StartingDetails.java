@@ -47,6 +47,6 @@ public class StartingDetails {
     private List<Integer> w4percentages = new ArrayList<Integer>(3);
 
     @OneToOne(mappedBy = "startingDetails")
-    @JsonBackReference(value = "login-startingdetails")
+    @JsonBackReference
     private Login login;
 }

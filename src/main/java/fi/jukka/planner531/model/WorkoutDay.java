@@ -20,16 +20,18 @@ public class WorkoutDay {
     private int week;
     private int dayNumber;
     private boolean completed;
+    private boolean assistanceAdded;
 
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate workoutDate;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JsonBackReference
     private WorkoutDayPlan workoutDayPlan;
 
-    @OneToMany(cascade = CascadeType.REMOVE, mappedBy = "workoutDay", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "workoutDay", cascade = CascadeType.REMOVE)
     @JsonManagedReference
-    private List<WorkoutDayExercise> workoutDayExercises = new ArrayList<>();
+    private List<WorkoutDayExercise>  workoutDayExercises = new ArrayList<>();
+
 }
 

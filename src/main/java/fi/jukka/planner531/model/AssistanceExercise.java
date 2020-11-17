@@ -2,24 +2,19 @@ package fi.jukka.planner531.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import javax.persistence.*;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 @Entity
-public class Exercise {
+public class AssistanceExercise extends ExerciseBase {
     @Id
     @GeneratedValue
     private Long id;
-    private String name;
-    private int restTime;
-    private float weightIncrement;
-    private float oneRmKg;
-    private int oneRmReps;
-    private float oneRm;
-    private String notes;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JsonBackReference
     private Category category;
 }

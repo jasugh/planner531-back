@@ -1,13 +1,10 @@
 package fi.jukka.planner531.controller;
 
-import fi.jukka.planner531.dto.*;
+import fi.jukka.planner531.dto.WorkoutDto;
 import fi.jukka.planner531.dto.workoutDayPlanGet.*;
 import fi.jukka.planner531.exception.NotFoundException;
 import fi.jukka.planner531.model.*;
 import fi.jukka.planner531.repository.*;
-
-import org.modelmapper.ModelMapper;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,53 +13,38 @@ import org.springframework.web.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/plan")
 public class WorkoutDayPlanController {
 
-    private final CategoryController categoryController;
-    private final ExerciseController exerciseController;
-    private final CategoryRepository categoryRepository;
-    private final ExerciseRepository exerciseRepository;
     private final LoginRepository loginRepository;
     private final StartingDetailsRepository startingDetailsRepository;
     private final WorkoutDayPlanRepository workoutDayPlanRepository;
     private final WorkoutDayRepository workoutDayRepository;
     private final WorkoutDayExerciseRepository workoutDayExerciseRepository;
     private final WorkoutDaySetRepository workoutDaySetRepository;
-
-    private Throwable cause(String field) {
-        return new Exception(field);
-    }
-
-    private static final ModelMapper modelMapper = new ModelMapper();
+    private final ExerciseBaseRepository exerciseBaseRepository;
+    private final MainExerciseRepository mainExerciseRepository;
 
     @Autowired
     public WorkoutDayPlanController(
-            CategoryController categoryController,
-            ExerciseController exerciseController,
-            CategoryRepository
-                    categoryRepository,
-            ExerciseRepository exerciseRepository,
             LoginRepository loginRepository,
             StartingDetailsRepository startingDetailsRepository,
             WorkoutDayPlanRepository workoutDayPlanRepository,
             WorkoutDayRepository workoutDayRepository,
             WorkoutDayExerciseRepository workoutDayExerciseRepository,
-            WorkoutDaySetRepository workoutDaySetRepository
-    ) {
-        this.categoryController = categoryController;
-        this.exerciseController = exerciseController;
-        this.categoryRepository = categoryRepository;
-        this.exerciseRepository = exerciseRepository;
+            WorkoutDaySetRepository workoutDaySetRepository,
+            ExerciseBaseRepository exerciseBaseRepository,
+            MainExerciseRepository mainExerciseRepository) {
         this.loginRepository = loginRepository;
         this.startingDetailsRepository = startingDetailsRepository;
         this.workoutDayPlanRepository = workoutDayPlanRepository;
         this.workoutDayRepository = workoutDayRepository;
         this.workoutDayExerciseRepository = workoutDayExerciseRepository;
         this.workoutDaySetRepository = workoutDaySetRepository;
+        this.exerciseBaseRepository = exerciseBaseRepository;
+        this.mainExerciseRepository = mainExerciseRepository;
     }
 
     @GetMapping("/{id}/plan")
@@ -80,34 +62,126 @@ public class WorkoutDayPlanController {
                 .orElseThrow(() -> new NotFoundException("Login data not found with id " + loginId));
 
         if (login.getWorkoutDayPlan() == null) {
-            throw new NotFoundException("Workout Day Plan was not found with Login id " + loginId);
+            throw new NotFoundException("WorkoutDto Day Plan was not found with Login id " + loginId);
         }
         return convertToGetDto(workoutDayPlanRepository
                 .getOne(login.getWorkoutDayPlan().getId()));
     }
 
     @GetMapping("/{loginId}/user/next")
-    public WorkoutDay getNextWorkoutByLoginId(@PathVariable Long loginId) {
-        // Get login information
+    public WorkoutDto getNextWorkoutByLoginId(@PathVariable Long loginId) {
         Login login = loginRepository.findById(loginId)
                 .orElseThrow(() -> new NotFoundException("Login data not found with id " + loginId));
 
         if (login.getWorkoutDayPlan() == null) {
             throw new NotFoundException("Workout Day Plan was not found with Login id " + loginId);
         }
-
         WorkoutDayPlan workoutDayPlan = workoutDayPlanRepository.getOne(login.getWorkoutDayPlan().getId());
 
-        Optional<WorkoutDay> workoutDays = workoutDayPlan.getWorkoutDays()
+        Optional<WorkoutDay> workoutDay = workoutDayPlan.getWorkoutDays()
                 .stream()
-                .filter(workoutDay -> !workoutDay.isCompleted())
+                .filter(woDay -> !(woDay.isCompleted()))
                 .findFirst();
 
-        if (workoutDays.isPresent()) {
-            return workoutDays.get();
+        if (workoutDay.isPresent()) {
+            WorkoutDay nextWorkoutDay = workoutDay.get();
+            if (nextWorkoutDay.isAssistanceAdded()) {
+                return convertOneDayToGetDto(nextWorkoutDay);
+            } else {
+                return convertOneDayToGetDto(assistanceExercisesAdd(nextWorkoutDay, workoutDayPlan));
+            }
         } else {
             throw new NotFoundException("No open workouts for user: " + login.getLoginName() + " / " + loginId);
         }
+    }
+
+    private WorkoutDto convertOneDayToGetDto(WorkoutDay workoutDay) {
+        WorkoutDto workoutDto = new WorkoutDto();
+        workoutDto.setId(workoutDay.getId());
+        workoutDto.setCycle(workoutDay.getCycle());
+        workoutDto.setWeek(workoutDay.getWeek());
+        workoutDto.setDay(workoutDay.getDayNumber());
+        workoutDto.setAssistanceAdded(workoutDay.isAssistanceAdded());
+        workoutDto.setWorkoutDate(workoutDay.getWorkoutDate());
+        workoutDto.setCompleted(workoutDay.isCompleted());
+        workoutDto.setExerciseDays(toDayExerciseDto(workoutDay.getWorkoutDayExercises()));
+        return workoutDto;
+    }
+
+    private WorkoutDay assistanceExercisesAdd(WorkoutDay workoutDay, WorkoutDayPlan workoutDayPlan) {
+        List<WorkoutDayExercise> workoutDayExercises = workoutDay.getWorkoutDayExercises();
+        MainExercise mainExercise = mainExerciseRepository.getOne(workoutDayExercises.get(0).getExerciseBaseId());
+
+        List<AssistanceExercise> assistanceExercises = mainExercise.getAssistanceExercises();
+        if (assistanceExercises.size() == 0) {
+            return workoutDay;
+        }
+
+        int i;
+        for (i = 0; i < assistanceExercises.size(); i++) {
+            WorkoutDayExercise workoutDayExercise = new WorkoutDayExercise();
+            workoutDayExercise.setExerciseBaseId(assistanceExercises.get(i).getId());
+            workoutDayExercise.setName(assistanceExercises.get(i).getName());
+            workoutDayExercise.setSequenceNumber(0);
+            workoutDayExercise.setWorkoutDay(workoutDay);
+            workoutDayExerciseRepository.save(workoutDayExercise);
+
+            workoutDay.getWorkoutDayExercises().add(workoutDayExercise);
+
+            WorkoutDaySet workoutDaySet = new WorkoutDaySet();
+            workoutDaySet.setKgs(0);
+            workoutDaySet.setReps(0);
+            workoutDaySet.setFinished(false);
+            workoutDaySet.setWorkoutDayExercise(workoutDayExercise);
+            workoutDaySetRepository.save(workoutDaySet);
+
+            workoutDayExercise.getWorkoutDaySets().add(workoutDaySet);
+        }
+        workoutDay.setAssistanceAdded(true);
+        workoutDay.setWorkoutDayPlan(workoutDayPlan);
+        workoutDayRepository.save(workoutDay);
+        return workoutDay;
+    }
+
+    @PutMapping("/{exerciseId}/assistance")
+    public WorkoutDay addAssistanceExerciseToWorkout(@RequestBody WorkoutDto workoutDto, @PathVariable Long exerciseId) {
+        WorkoutDay workoutDay = workoutDayRepository.findById(workoutDto.getId())
+                .orElseThrow(() -> new NotFoundException("Workout Day was not found with id " + workoutDto.getId()));
+
+        ExerciseBase exerciseBase = exerciseBaseRepository.findById(exerciseId)
+                .orElseThrow(() -> new NotFoundException("Exercise data was not found with id " + exerciseId));
+
+        WorkoutDayExercise workoutDayExercise = new WorkoutDayExercise();
+        workoutDayExercise.setExerciseBaseId(exerciseBase.getId());
+        workoutDayExercise.setName(exerciseBase.getName());
+        workoutDayExercise.setSequenceNumber(0);
+        workoutDayExercise.setWorkoutDay(workoutDay);
+        workoutDayExerciseRepository.save(workoutDayExercise);
+
+        workoutDay.getWorkoutDayExercises().add(workoutDayExercise);
+
+        WorkoutDaySet workoutDaySet = new WorkoutDaySet();
+        workoutDaySet.setKgs(0);
+        workoutDaySet.setReps(0);
+        workoutDaySet.setFinished(false);
+        workoutDaySet.setWorkoutDayExercise(workoutDayExercise);
+        workoutDaySetRepository.save(workoutDaySet);
+
+        workoutDayExercise.getWorkoutDaySets().add(workoutDaySet);
+
+        workoutDay.setAssistanceAdded(true);
+        workoutDayRepository.save(workoutDay);
+        return workoutDay;
+    }
+
+    @DeleteMapping("/{exerciseId}/exercise")
+    public ResponseEntity<?> deleteExercisesFromWorkoutDay(@PathVariable Long exerciseId) {
+        WorkoutDayExercise workoutDayExercise = workoutDayExerciseRepository.findById(exerciseId)
+                .orElseThrow(() -> new NotFoundException("Exercise data was not found with id " + exerciseId));
+
+        workoutDayExerciseRepository.deleteById(exerciseId);
+
+        return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/{id}/skip")
@@ -117,11 +191,13 @@ public class WorkoutDayPlanController {
 
         workoutDay.setCompleted(true);
         workoutDayRepository.save(workoutDay);
+
         return workoutDay;
     }
 
     @PutMapping("/{id}/complete")
     public WorkoutDay completeWorkout(@PathVariable Long id) {
+
         WorkoutDay workoutDay = workoutDayRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Workout not found with id " + id));
 
@@ -146,7 +222,7 @@ public class WorkoutDayPlanController {
             workoutDayPlanRepository.deleteById(workoutDayPlanId);
         }
 
-        // Create a new Workout Plan
+        // Create a new WorkoutDto Plan
         WorkoutDayPlan workoutDayPlan = new WorkoutDayPlan();
         workoutDayPlan.setStartingDate(startingDetails.getStartingDate());
         WorkoutDayPlan newWorkoutDayPlan = workoutDayPlanRepository.save(workoutDayPlan);
@@ -157,13 +233,13 @@ public class WorkoutDayPlanController {
         // Create individual exercises for each workout day
         createWorkoutDays(startingDetails, workoutDayPlan);
 
-        String message = "New Workout Plan was created with id " + workoutDayPlan.getId();
+        String message = "New WorkoutDto Plan was created with id " + workoutDayPlan.getId();
         return new ResponseEntity<String>(message, HttpStatus.OK);
     }
 
     public void createWorkoutDays(StartingDetails startingDetails, WorkoutDayPlan workoutDayPlan) {
-        // Check that all the 4 5/3/1-exercises exist and load them to an array
-        List<Exercise> defaultExercises = checkExercisesAndCategories();
+        MainExerciseHeader mainExerciseHeader = startingDetails.getLogin().getMainExerciseHeader();
+        List<MainExercise> defaultExercises = mainExerciseHeader.getMainExercises();
 
         float warmup1Kg = 0;
         float warmup2Kg = 0;
@@ -220,7 +296,7 @@ public class WorkoutDayPlanController {
                 }
                 while (day <= 4) {
 
-                    // day numbers always correspond to exercises (1,2,3,4)
+                    // day numbers correspond to MainExercise-table exerciseNumber-field (1,2,3,4)
                     switch (day) {
                         case 1: {
                             warmup1Kg = roundKgs(pressKg * 0.4f);
@@ -391,29 +467,37 @@ public class WorkoutDayPlanController {
             int[] mainReps,
             float bbbKg,
             WorkoutDayPlan workoutDayPlan,
-            List<Exercise> defaultExercises) {
+            List<MainExercise> defaultExercises) {
 
         WorkoutDay workoutDay = new WorkoutDay();
         workoutDay.setCycle(cycle);
         workoutDay.setWeek(week);
         workoutDay.setDayNumber(day);
         workoutDay.setCompleted(false);
+        workoutDay.setAssistanceAdded(false);
         workoutDay.setWorkoutDate(null);
         workoutDay.setWorkoutDayPlan(workoutDayPlan);
         workoutDayRepository.save(workoutDay);
 
         WorkoutDayExercise workoutDayExercise = createExercise(defaultExercises.get(day - 1), workoutDay);
-
         createWarmUpSets(warmUpKgs, workoutDayExercise);
+        workoutDayExercise = createExercise(defaultExercises.get(day - 1), workoutDay);
         createMainSets(mainKgs, mainReps, workoutDayExercise);
+        workoutDayExercise = createExercise(defaultExercises.get(day - 1), workoutDay);
         createBBBSets(bbbKg, workoutDayExercise);
     }
 
-    public WorkoutDayExercise createExercise(Exercise exercise, WorkoutDay workoutDay) {
+    public WorkoutDayExercise createExercise(MainExercise mainExercise, WorkoutDay workoutDay) {
+        ExerciseBase exerciseBase = exerciseBaseRepository.getOne(mainExercise.getId());
+
         WorkoutDayExercise workoutDayExercise = new WorkoutDayExercise();
-        workoutDayExercise.setExercise(exercise);
+        workoutDayExercise.setExerciseBaseId(mainExercise.getId());
+        workoutDayExercise.setName(exerciseBase.getName());
         workoutDayExercise.setWorkoutDay(workoutDay);
-        return workoutDayExerciseRepository.save(workoutDayExercise);
+        workoutDayExerciseRepository.save(workoutDayExercise);
+        workoutDay.getWorkoutDayExercises().add(workoutDayExercise);
+
+        return workoutDayExercise;
     }
 
     public void createWarmUpSets(float[] warmUpKgs, WorkoutDayExercise workoutDayExercise) {
@@ -426,7 +510,6 @@ public class WorkoutDayPlanController {
                 workoutDaySet.setReps(3);
             }
             workoutDaySet.setFinished(false);
-            workoutDaySet.setTypeOfSet("W");
             workoutDaySet.setWorkoutDayExercise(workoutDayExercise);
             workoutDaySetRepository.save(workoutDaySet);
         }
@@ -439,7 +522,6 @@ public class WorkoutDayPlanController {
             workoutDaySet.setKgs(mainKgs[i - 1]);
             workoutDaySet.setReps(mainReps[i - 1]);
             workoutDaySet.setFinished(false);
-            workoutDaySet.setTypeOfSet("M");
             workoutDaySet.setWorkoutDayExercise(workoutDayExercise);
             workoutDaySetRepository.save(workoutDaySet);
         }
@@ -451,7 +533,6 @@ public class WorkoutDayPlanController {
             WorkoutDaySet workoutDaySet = new WorkoutDaySet();
             workoutDaySet.setKgs(bbbKg);
             workoutDaySet.setReps(10);
-            workoutDaySet.setTypeOfSet("B");
             workoutDaySet.setFinished(false);
             workoutDaySet.setWorkoutDayExercise(workoutDayExercise);
             workoutDaySetRepository.save(workoutDaySet);
@@ -463,80 +544,14 @@ public class WorkoutDayPlanController {
         return (float) Math.ceil(n * 0.4f) / 0.4f;
     }
 
-    public List<Exercise> checkExercisesAndCategories() {
-        if (categoryRepository.findFirstByName("Shoulders") == null) {
-            createCategory("Shoulders");
-        }
-        if (categoryRepository.findFirstByName("Back") == null) {
-            createCategory("Back");
-        }
-        if (categoryRepository.findFirstByName("Chest") == null) {
-            createCategory("Chest");
-        }
-        if (categoryRepository.findFirstByName("Legs") == null) {
-            createCategory("Legs");
-        }
 
-        List<Exercise> exercises = new ArrayList<>();
-        if (exerciseRepository.findFirstByName("Overhead Press") == null) {
-            createExercise(
-                    "Overhead Press",
-                    (float) 2.5,
-                    categoryRepository.findFirstByName("Shoulders").getId());
-        }
-        exercises.add(exerciseRepository.findFirstByName("Overhead Press"));
-
-        if (exerciseRepository.findFirstByName("Dead Lift") == null) {
-            createExercise(
-                    "Dead Lift",
-                    (float) 5.0,
-                    categoryRepository.findFirstByName("Back").getId());
-        }
-        exercises.add(exerciseRepository.findFirstByName("Dead Lift"));
-
-        if (exerciseRepository.findFirstByName("Bench Press") == null) {
-            createExercise(
-                    "Bench Press",
-                    (float) 2.5,
-                    categoryRepository.findFirstByName("Chest").getId());
-        }
-        exercises.add(exerciseRepository.findFirstByName("Bench Press"));
-
-        if (exerciseRepository.findFirstByName("Squat") == null) {
-            createExercise(
-                    "Squat",
-                    (float) 5.0,
-                    categoryRepository.findFirstByName("Legs").getId());
-        }
-        exercises.add(exerciseRepository.findFirstByName("Squat"));
-
-        return exercises;
-    }
-
-    void createCategory(String categoryName) {
-        CategoryDto newCategory = new CategoryDto();
-        newCategory.setName(categoryName);
-        newCategory.setNotes("");
-        categoryController.saveCategory(newCategory);
-    }
-
-    void createExercise(String exerciseName, float weightIncrement, Long categoryId) {
-        ExerciseDto newExercise = new ExerciseDto();
-        newExercise.setName(exerciseName);
-        newExercise.setRestTime(120);
-        newExercise.setWeightIncrement(weightIncrement);
-        newExercise.setNotes("");
-//        newExercise.setCategoryId(categoryId);
-        exerciseController.saveExercise(newExercise);
-    }
-
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{id}/plan")
     public ResponseEntity<?> deleteOne(@PathVariable Long id) {
         WorkoutDayPlan workoutDayPlan = workoutDayPlanRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Workout Day Plan not found with id " + id));
+                .orElseThrow(() -> new NotFoundException("WorkoutDto Day Plan not found with id " + id));
 
         if (workoutDayPlan.getLogin() == null) {
-            throw new NotFoundException("There is no Login in Workout Day Plan with id " + id);
+            throw new NotFoundException("There is no Login in WorkoutDto Day Plan with id " + id);
         }
 
 
@@ -614,7 +629,7 @@ public class WorkoutDayPlanController {
                     dayDto.setDay(workoutDays.get(iii).getDayNumber());
                     dayDto.setWorkoutDate(workoutDays.get(iii).getWorkoutDate());
                     dayDto.setCompleted(workoutDays.get(iii).isCompleted());
-                    dayDto.setDayExerciseDtos(toDayExerciseDto(workoutDays.get(iii).getWorkoutDayExercises()));
+                    dayDto.setExerciseDays(toDayExerciseDto(workoutDays.get(iii).getWorkoutDayExercises()));
                     dayDtoS.add(dayDto);
                 }
             }
@@ -622,35 +637,34 @@ public class WorkoutDayPlanController {
         return dayDtoS;
     }
 
-    private List<DayExerciseDto> toDayExerciseDto(List<WorkoutDayExercise> workoutDayExercises) {
-        List<DayExerciseDto> dayExerciseDtos = new ArrayList<>();
+    private List<ExerciseDay> toDayExerciseDto(List<WorkoutDayExercise> workoutDayExercises) {
+        List<ExerciseDay> exerciseDays = new ArrayList<>();
         int i;
 
         for (i = 0; i < workoutDayExercises.size(); i++) {
-            DayExerciseDto dayExerciseDto = new DayExerciseDto();
-            dayExerciseDto.setExercise(workoutDayExercises.get(i).getExercise().getName());
-            dayExerciseDto.setSetDtos(toSetDto(workoutDayExercises.get(i).getWorkoutDaySets()));
-            dayExerciseDtos.add(dayExerciseDto);
+            ExerciseDay exerciseDay = new ExerciseDay();
+            exerciseDay.setId(workoutDayExercises.get(i).getId());
+            exerciseDay.setExerciseBaseId(workoutDayExercises.get(i).getExerciseBaseId());
+            exerciseDay.setExerciseName(workoutDayExercises.get(i).getName());
+            exerciseDay.setExerciseSets(toSetDto(workoutDayExercises.get(i).getWorkoutDaySets()));
+            exerciseDays.add(exerciseDay);
         }
-        return dayExerciseDtos;
+        return exerciseDays;
     }
 
-    private List<SetDto> toSetDto(List<WorkoutDaySet> workoutDaySets) {
-        List<SetDto> setDtoS = new ArrayList<>();
+    private List<ExerciseSet> toSetDto(List<WorkoutDaySet> workoutDaySets) {
+        List<ExerciseSet> exerciseSets = new ArrayList<>();
         int i;
 
         for (i = 0; i < workoutDaySets.size(); i++) {
-            SetDto setDto = new SetDto();
-
-            setDto.setKgs(workoutDaySets.get(i).getKgs());
-            setDto.setReps(workoutDaySets.get(i).getReps());
-            setDto.setFinished(false);
-            setDto.setNotes("");
-            setDto.setTypeOfSet(workoutDaySets.get(i).getTypeOfSet());
-
-            setDtoS.add(setDto);
+            ExerciseSet exerciseSet = new ExerciseSet();
+            exerciseSet.setId(workoutDaySets.get(i).getId());
+            exerciseSet.setKgs(workoutDaySets.get(i).getKgs());
+            exerciseSet.setReps(workoutDaySets.get(i).getReps());
+            exerciseSet.setFinished(false);
+            exerciseSet.setNotes("");
+            exerciseSets.add(exerciseSet);
         }
-
-        return setDtoS;
+        return exerciseSets;
     }
 }

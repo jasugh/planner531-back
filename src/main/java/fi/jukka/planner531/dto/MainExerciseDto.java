@@ -1,6 +1,10 @@
 package fi.jukka.planner531.dto;
 
-import fi.jukka.planner531.model.MainExerciseHeader;
+import fi.jukka.planner531.model.AssistanceExercise;
+
+import javax.persistence.ManyToMany;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainExerciseDto {
     private Long id;
@@ -11,21 +15,23 @@ public class MainExerciseDto {
     private int oneRmReps;
     private float oneRm;
     private String notes;
-
+    private int exerciseNumber;
+    private Long mainExerciseHeaderId;
+    private List<AssistanceExercise>assistanceExercises = new ArrayList<>();
 
     public MainExerciseDto() {
     }
 
-    public MainExerciseDto(
-            Long id,
-            String name,
-            int restTime,
-            float weightIncrement,
-            float oneRmKg,
-            int oneRmReps,
-            float oneRm,
-            String notes
-    ) {
+    public MainExerciseDto(Long id,
+                           String name,
+                           int restTime,
+                           float weightIncrement,
+                           float oneRmKg,
+                           int oneRmReps,
+                           float oneRm,
+                           String notes, int exerciseNumber,
+                           Long mainExerciseHeaderId,
+                           List<AssistanceExercise> assistanceExercises) {
         this.id = id;
         this.name = name;
         this.restTime = restTime;
@@ -34,6 +40,9 @@ public class MainExerciseDto {
         this.oneRmReps = oneRmReps;
         this.oneRm = oneRm;
         this.notes = notes;
+        this.exerciseNumber = exerciseNumber;
+        this.mainExerciseHeaderId = mainExerciseHeaderId;
+        this.assistanceExercises = assistanceExercises;
     }
 
     public Long getId() {
@@ -100,4 +109,42 @@ public class MainExerciseDto {
         this.notes = notes;
     }
 
+    public int getExerciseNumber() {
+        return exerciseNumber;
+    }
+
+    public void setExerciseNumber(int exerciseNumber) {
+        this.exerciseNumber = exerciseNumber;
+    }
+
+    public Long getMainExerciseHeaderId() {
+        return mainExerciseHeaderId;
+    }
+
+    public void setMainExerciseHeaderId(Long mainExerciseHeaderId) {
+        this.mainExerciseHeaderId = mainExerciseHeaderId;
+    }
+
+    public List<AssistanceExercise> getAssistanceExercises() {
+        return assistanceExercises;
+    }
+
+    public void setAssistanceExercises(List<AssistanceExercise> assistanceExercises) {
+        this.assistanceExercises = assistanceExercises;
+    }
+
+    @Override
+    public String toString() {
+        return "MainExerciseDto{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", restTime=" + restTime +
+                ", weightIncrement=" + weightIncrement +
+                ", oneRmKg=" + oneRmKg +
+                ", oneRmReps=" + oneRmReps +
+                ", oneRm=" + oneRm +
+                ", notes='" + notes + '\'' +
+                ", exerciseNumber=" + exerciseNumber +
+                '}';
+    }
 }

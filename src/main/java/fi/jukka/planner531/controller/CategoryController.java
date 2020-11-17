@@ -1,11 +1,9 @@
 package fi.jukka.planner531.controller;
 
 import fi.jukka.planner531.dto.CategoryDto;
-import fi.jukka.planner531.dto.ExerciseDto;
 import fi.jukka.planner531.exception.BadRequestException;
 import fi.jukka.planner531.exception.NotFoundException;
 import fi.jukka.planner531.model.Category;
-import fi.jukka.planner531.model.Exercise;
 import fi.jukka.planner531.repository.CategoryRepository;
 
 import org.modelmapper.ModelMapper;
@@ -91,7 +89,7 @@ public class CategoryController {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Category not found with id " + id));
 
-        if (category.getExercises().size() > 0) {
+        if (category.getAssistanceExercises().size() > 0) {
             throw new BadRequestException("There are still exercises in this category, they must be removed first",
                     cause("exercises"));
         }

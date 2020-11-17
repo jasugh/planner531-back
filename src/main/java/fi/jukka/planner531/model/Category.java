@@ -22,5 +22,5 @@ public class Category {
 
     @OneToMany(mappedBy = "category")
     @JsonManagedReference
-    private final List<Exercise> exercises = new ArrayList<>();
+    private final List<AssistanceExercise> assistanceExercises = new ArrayList<>();
 }

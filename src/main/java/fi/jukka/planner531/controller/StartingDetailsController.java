@@ -58,13 +58,12 @@ public class StartingDetailsController {
                 .orElseThrow(() -> new NotFoundException("Login data not found with id " + loginId));
 
         if (login.getStartingDetails() == null) {
-            throw new BadRequestException("Starting Details not found with user id  " + loginId, cause("id"));
+            throw new NotFoundException("Starting Details not found with user id  " + loginId);
         }
 
         return convertToDTO(startingDetailsRepository.findById(login.getStartingDetails().getId())
                 .orElseThrow(() ->
-                        new BadRequestException("Starting Details not found with user id  " + loginId, cause("id"))
-                ));
+                        new NotFoundException("Starting Details not found with user id " + loginId)));
     }
 
     @PostMapping("")
@@ -167,21 +166,25 @@ public class StartingDetailsController {
     ResponseEntity<?> deleteOne(@PathVariable Long id) {
         StartingDetails startingDetails = startingDetailsRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Starting details not found with " + id));
-        Long workoutDayPlanId = (long) 0;
+
+        Long workoutDayPlanId = null;
+
         if (startingDetails.getLogin() != null) {
             Login login = loginRepository.findById(startingDetails.getLogin().getId())
                     .orElseThrow(() -> new NotFoundException("Login not found with " + startingDetails.getLogin().getId()));
 
-            if(login.getWorkoutDayPlan() != null) {
+            if (login.getWorkoutDayPlan() != null) {
                 workoutDayPlanId = login.getWorkoutDayPlan().getId();
             }
             login.setStartingDetails(null);
             login.setWorkoutDayPlan(null);
             loginRepository.save(login);
         }
-        if(workoutDayPlanId != null) {
+
+        if (workoutDayPlanId != null) {
             workoutDayPlanRepository.deleteById(workoutDayPlanId);
         }
+
         startingDetailsRepository.deleteById(id);
         return ResponseEntity.noContent().build();
     }

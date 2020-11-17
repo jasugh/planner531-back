@@ -1,10 +1,12 @@
 package fi.jukka.planner531.config;
 
 import fi.jukka.planner531.controller.CategoryController;
-import fi.jukka.planner531.controller.ExerciseController;
+import fi.jukka.planner531.controller.AssistanceExerciseController;
+import fi.jukka.planner531.controller.MainExerciseController;
 import fi.jukka.planner531.dto.CategoryDto;
 import fi.jukka.planner531.dto.ExerciseDto;
 import fi.jukka.planner531.dto.LoginDto;
+import fi.jukka.planner531.dto.MainExerciseDto;
 import fi.jukka.planner531.model.*;
 import fi.jukka.planner531.repository.*;
 
@@ -22,31 +24,30 @@ public class AppConfiguration {
 
     private final LoginRepository loginRepository;
     private final CategoryRepository categoryRepository;
-    private final ExerciseRepository exerciseRepository;
-    private final MainExerciseRepository mainExerciseHeaderReporitory;
+    private final AssistanceExerciseRepository assistanceExerciseRepository;
     private final MainExerciseRepository mainExerciseRepository;
     private final JwtUserDetailsService jwtUserDetailsService;
     private final CategoryController categoryController;
-    private final ExerciseController exerciseController;
+    private final AssistanceExerciseController assistanceExerciseController;
+    private final MainExerciseController mainExerciseController;
 
     public AppConfiguration(
             LoginRepository loginRepository,
             CategoryRepository categoryRepository,
-            ExerciseRepository exerciseRepository,
-            ExerciseRepository exerciseRepository1,
-            MainExerciseRepository mainExerciseHeaderReporitory,
+            AssistanceExerciseRepository assistanceExerciseRepository,
             MainExerciseRepository mainExerciseRepository,
+            MainExerciseController mainExerciseController,
             JwtUserDetailsService jwtUserDetailsService,
             CategoryController categoryController,
-            ExerciseController exerciseController) {
+            AssistanceExerciseController assistanceExerciseController) {
         this.loginRepository = loginRepository;
         this.categoryRepository = categoryRepository;
-        this.exerciseRepository = exerciseRepository1;
-        this.mainExerciseHeaderReporitory = mainExerciseHeaderReporitory;
+        this.assistanceExerciseRepository = assistanceExerciseRepository;
         this.mainExerciseRepository = mainExerciseRepository;
         this.jwtUserDetailsService = jwtUserDetailsService;
         this.categoryController = categoryController;
-        this.exerciseController = exerciseController;
+        this.assistanceExerciseController = assistanceExerciseController;
+        this.mainExerciseController = mainExerciseController;
     }
 
     @Bean
@@ -61,8 +62,6 @@ public class AppConfiguration {
                 login = jwtUserDetailsService.save(newLoginDTO);
             }
 
-            MainExerciseHeader mainExerciseHeader = login.getMainExerciseHeader();
-
             if (categoryRepository.findFirstByName("Shoulders") == null) {
                 createCategory("Shoulders");
             }
@@ -76,70 +75,98 @@ public class AppConfiguration {
                 createCategory("Legs");
             }
 
-            if (exerciseRepository.findFirstByName("Dumbbell Lateral Raise") == null) {
+            if (assistanceExerciseRepository.findFirstByName("Dumbbell Lateral Raise") == null) {
                 createExercise(
                         "Dumbbell Lateral Raise",
                         (float) 2.5,
+                        (float) 50,
+                        2,
+                        (float) 52,
                         categoryRepository.findFirstByName("Shoulders").getId());
             }
-            if (exerciseRepository.findFirstByName("Dumbbell Row") == null) {
+            if (assistanceExerciseRepository.findFirstByName("Dumbbell Row") == null) {
                 createExercise(
                         "Dumbbell Row",
                         (float) 5.0,
+                        (float) 120,
+                        1,
+                        (float) 120,
                         categoryRepository.findFirstByName("Back").getId());
             }
-            if (exerciseRepository.findFirstByName("Close-grip bench press") == null) {
+            if (assistanceExerciseRepository.findFirstByName("Close-grip bench press") == null) {
                 createExercise(
                         "Close-grip bench press",
                         (float) 2.5,
+                        (float) 70,
+                        1,
+                        (float) 70,
                         categoryRepository.findFirstByName("Chest").getId());
             }
-            if (exerciseRepository.findFirstByName("Front Squat") == null) {
+            if (assistanceExerciseRepository.findFirstByName("Front Squat") == null) {
                 createExercise(
                         "Front Squat",
                         (float) 5.0,
+                        (float) 80,
+                        1,
+                        (float) 80,
                         categoryRepository.findFirstByName("Legs").getId());
             }
 
+            MainExerciseHeader mainExerciseHeader = login.getMainExerciseHeader();
+
             if (mainExerciseRepository.findFirstByName("Overhead Press") == null) {
-                createMainExercise(
-                        "Overhead Press",
-                        (float) 2.5,
-                        (float) 50,
-                        1,
-                        (float) 50,
-                        1,
-                        mainExerciseHeader);
+                MainExerciseDto mainExerciseDto = new MainExerciseDto();
+                mainExerciseDto.setName("Overhead Press");
+                mainExerciseDto.setRestTime(120);
+                mainExerciseDto.setWeightIncrement((float) 2.5);
+                mainExerciseDto.setOneRmKg((float) 50);
+                mainExerciseDto.setOneRmReps(1);
+                mainExerciseDto.setOneRm((float) 50);
+                mainExerciseDto.setNotes("");
+                mainExerciseDto.setExerciseNumber(1);
+                mainExerciseDto.setMainExerciseHeaderId(mainExerciseHeader.getId());
+                mainExerciseController.saveMainExercise(mainExerciseDto);
             }
+
             if (mainExerciseRepository.findFirstByName("Dead Lift") == null) {
-                createMainExercise(
-                        "Dead Lift",
-                        (float) 5.0,
-                        (float) 120,
-                        2,
-                        (float) 128,
-                        2,
-                        mainExerciseHeader);
+                MainExerciseDto mainExerciseDto = new MainExerciseDto();
+                mainExerciseDto.setName("Dead Lift");
+                mainExerciseDto.setRestTime(120);
+                mainExerciseDto.setWeightIncrement((float) 5.0);
+                mainExerciseDto.setOneRmKg((float) 120);
+                mainExerciseDto.setOneRmReps(1);
+                mainExerciseDto.setOneRm((float) 120);
+                mainExerciseDto.setNotes("");
+                mainExerciseDto.setExerciseNumber(2);
+                mainExerciseDto.setMainExerciseHeaderId(mainExerciseHeader.getId());
+                mainExerciseController.saveMainExercise(mainExerciseDto);
             }
             if (mainExerciseRepository.findFirstByName("Bench Press") == null) {
-                createMainExercise(
-                        "Bench Press", (
-                                float) 2.5,
-                        (float) 75,
-                        1,
-                        (float) 75,
-                        3,
-                        mainExerciseHeader);
+                MainExerciseDto mainExerciseDto = new MainExerciseDto();
+                mainExerciseDto.setName("Bench Press");
+                mainExerciseDto.setRestTime(120);
+                mainExerciseDto.setWeightIncrement((float) 2.5);
+                mainExerciseDto.setOneRmKg((float) 70);
+                mainExerciseDto.setOneRmReps(1);
+                mainExerciseDto.setOneRm((float) 70);
+                mainExerciseDto.setNotes("");
+                mainExerciseDto.setExerciseNumber(3);
+                mainExerciseDto.setMainExerciseHeaderId(mainExerciseHeader.getId());
+                mainExerciseController.saveMainExercise(mainExerciseDto);
+
             }
             if (mainExerciseRepository.findFirstByName("Squat") == null) {
-                createMainExercise(
-                        "Squat",
-                        (float) 5.0,
-                        (float) 80,
-                        1,
-                        (float) 80,
-                        4,
-                        mainExerciseHeader);
+                MainExerciseDto mainExerciseDto = new MainExerciseDto();
+                mainExerciseDto.setName("Squat");
+                mainExerciseDto.setRestTime(120);
+                mainExerciseDto.setWeightIncrement((float) 5.0);
+                mainExerciseDto.setOneRmKg((float) 80);
+                mainExerciseDto.setOneRmReps(1);
+                mainExerciseDto.setOneRm((float) 80);
+                mainExerciseDto.setNotes("");
+                mainExerciseDto.setExerciseNumber(4);
+                mainExerciseDto.setMainExerciseHeaderId(mainExerciseHeader.getId());
+                mainExerciseController.saveMainExercise(mainExerciseDto);
             }
         };
     }
@@ -151,39 +178,23 @@ public class AppConfiguration {
         categoryController.saveCategory(newCategory);
     }
 
-    void createExercise(String exerciseName, float weightIncrement, Long categoryId) {
+    void createExercise(
+            String exerciseName,
+            float weightIncrement,
+            float oneRmKg,
+            int onRmReps,
+            float setOneRm,
+            Long categoryId
+    ) {
         ExerciseDto newExercise = new ExerciseDto();
         newExercise.setName(exerciseName);
         newExercise.setRestTime(120);
         newExercise.setWeightIncrement(weightIncrement);
-        newExercise.setOneRmKg(0);
-        newExercise.setOneRmReps(0);
-        newExercise.setOneRm(0);
+        newExercise.setOneRmKg(oneRmKg);
+        newExercise.setOneRmReps(onRmReps);
+        newExercise.setOneRm(setOneRm);
         newExercise.setNotes("");
         newExercise.setCategoryId(categoryId);
-        exerciseController.saveExercise(newExercise);
-    }
-
-    void createMainExercise(
-            String mainExerciseName,
-            float weightIncrement,
-            float oneRmKg,
-            int oneRmReps,
-            float oneRm,
-            int exerciseNumber,
-            MainExerciseHeader mainExerciseHeader
-    ) {
-        MainExercise newMainExercise = new MainExercise();
-        newMainExercise.setName(mainExerciseName);
-        newMainExercise.setRestTime(120);
-        newMainExercise.setWeightIncrement(weightIncrement);
-        newMainExercise.setOneRmKg(oneRmKg);
-        newMainExercise.setOneRmReps(oneRmReps);
-        newMainExercise.setOneRm(oneRm);
-        newMainExercise.setNotes("");
-        newMainExercise.setExerciseNumber(exerciseNumber);
-        newMainExercise.setMainExerciseHeader(mainExerciseHeader);
-        mainExerciseRepository.save(newMainExercise);
-        mainExerciseHeader.getMainExercises().add(newMainExercise);
+        assistanceExerciseController.saveExercise(newExercise);
     }
 }

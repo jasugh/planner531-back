@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.Data;
+import org.hibernate.annotations.SortNatural;
 
 import javax.persistence.*;
 import java.time.LocalDate;
@@ -21,10 +22,11 @@ public class WorkoutDayPlan {
     private LocalDate startingDate;
 
     @OneToOne(mappedBy = "workoutDayPlan")
-    @JsonBackReference(value = "login-workoutdayplan")
+    @JsonBackReference
     private Login login;
 
-    @OneToMany(cascade = CascadeType.REMOVE, mappedBy = "workoutDayPlan", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "workoutDayPlan", cascade = CascadeType.REMOVE)
     @JsonManagedReference
+    @OrderBy("id asc " )
     private List<WorkoutDay> workoutDays = new ArrayList<>();
 }

@@ -15,16 +15,15 @@ public class WorkoutDayExercise {
     @Id
     @GeneratedValue
     private Long id;
+    private Long exerciseBaseId;
+    private String name;
+    private int sequenceNumber;
 
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JsonManagedReference
-    private Exercise exercise;
-
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JsonBackReference
     private WorkoutDay workoutDay;
 
-    @OneToMany(cascade = CascadeType.REMOVE, mappedBy = "workoutDayExercise", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "workoutDayExercise", cascade = CascadeType.REMOVE)
     @JsonManagedReference
     private List<WorkoutDaySet> workoutDaySets = new ArrayList<>();
 }

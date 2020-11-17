@@ -58,15 +58,14 @@ public class ControllerAdvisor extends ResponseEntityExceptionHandler {
 
         ApiError apiError = new ApiError(
                 LocalDateTime.now(),
-                HttpStatus.BAD_REQUEST.value(),
-                HttpStatus.BAD_REQUEST,
+                HttpStatus.NOT_FOUND.value(),
+                HttpStatus.NOT_FOUND,
                 message,
                 url,
                 cause.getMessage());
 
         return new ResponseEntity<>(apiError, HttpStatus.BAD_REQUEST);
     }
-
 
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(

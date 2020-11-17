@@ -13,12 +13,10 @@ public class WorkoutDaySet {
     private Long id;
     private float kgs;
     private int reps;
-
     private boolean finished;
     private String notes;
-    private String typeOfSet;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JsonBackReference
     private WorkoutDayExercise workoutDayExercise;
 }

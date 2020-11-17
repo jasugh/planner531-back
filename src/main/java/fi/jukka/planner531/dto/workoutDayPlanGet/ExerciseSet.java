@@ -1,21 +1,29 @@
 package fi.jukka.planner531.dto.workoutDayPlanGet;
 
-public class SetDto {
+public class ExerciseSet {
+    private Long id;
     private float kgs;
     private int reps;
     private boolean finished;
     private String notes;
-    private String typeOfSet;
 
-    public SetDto() {
+    public ExerciseSet() {
     }
 
-    public SetDto(float kgs, int reps, boolean finished, String notes, String typeOfSet) {
+    public ExerciseSet(Long id, float kgs, int reps, boolean finished, String notes) {
+        this.id = id;
         this.kgs = kgs;
         this.reps = reps;
         this.finished = finished;
         this.notes = notes;
-        this.typeOfSet = typeOfSet;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public float getKgs() {
@@ -48,13 +56,5 @@ public class SetDto {
 
     public void setNotes(String notes) {
         this.notes = notes;
-    }
-
-    public String getTypeOfSet() {
-        return typeOfSet;
-    }
-
-    public void setTypeOfSet(String typeOfSet) {
-        this.typeOfSet = typeOfSet;
     }
 }

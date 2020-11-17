@@ -1,6 +1,6 @@
 package fi.jukka.planner531.dto;
 
-import fi.jukka.planner531.model.Exercise;
+import fi.jukka.planner531.model.AssistanceExercise;
 
 import java.util.List;
 
@@ -8,16 +8,16 @@ public class CategoryDto {
     private Long id;
     private String name;
     private String notes;
-    private List<Exercise> exercises;
+    private List<AssistanceExercise> assistanceExercises;
 
     public CategoryDto() {
     }
 
-    public CategoryDto(Long id, String name, String notes, List<Exercise> exercises) {
+    public CategoryDto(Long id, String name, String notes, List<AssistanceExercise> assistanceExercises) {
         this.id = id;
         this.name = name;
         this.notes = notes;
-        this.exercises = exercises;
+        this.assistanceExercises = assistanceExercises;
     }
 
     public Long getId() {
@@ -44,11 +44,11 @@ public class CategoryDto {
         this.notes = notes;
     }
 
-    public List<Exercise> getExercises() {
-        return exercises;
+    public List<AssistanceExercise> getExercises() {
+        return assistanceExercises;
     }
 
-    public void setExercises(List<Exercise> exercises) {
-        this.exercises = exercises;
+    public void setExercises(List<AssistanceExercise> assistanceExercises) {
+        this.assistanceExercises = assistanceExercises;
     }
 }

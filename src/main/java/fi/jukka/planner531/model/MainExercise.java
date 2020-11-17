@@ -1,33 +1,31 @@
 package fi.jukka.planner531.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 @Entity
-public class MainExercise {
+public class MainExercise extends ExerciseBase{
     @Id
     @GeneratedValue
     private Long id;
 
-    private String name;
-    private int restTime;
-    private float weightIncrement;
-    private float oneRmKg;
-    private int oneRmReps;
-    private float oneRm;
-    private String notes;
     private int exerciseNumber;
 
     @ManyToOne
-    @JsonBackReference(value = "main-exercises")
+    @JsonBackReference
     private MainExerciseHeader mainExerciseHeader;
 
-//    @ManyToMany
-//    private List<Exercise> assistanceExercises = new ArrayList<>();
+    @ManyToMany
+    private List<AssistanceExercise> assistanceExercises = new ArrayList<>();
+
+    public void removeAssistanceExercise(AssistanceExercise assistanceExercise) {
+        this.assistanceExercises.remove(assistanceExercise);
+    }
 }

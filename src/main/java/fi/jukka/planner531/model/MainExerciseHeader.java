@@ -3,6 +3,7 @@ package fi.jukka.planner531.model;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.Data;
+import org.springframework.core.annotation.Order;
 
 import javax.persistence.*;
 import javax.validation.constraints.Size;
@@ -16,13 +17,13 @@ public class MainExerciseHeader {
     @GeneratedValue
     private Long id;
 
-    @OneToMany(mappedBy = "mainExerciseHeader")
-    @JsonManagedReference(value = "main-exercises")
-    @Size(max = 4)
-    @OrderBy("exerciseNumber asc ")
-    private List<MainExercise> mainExercises = new ArrayList<>();
-
     @OneToOne(mappedBy = "mainExerciseHeader")
-    @JsonBackReference(value = "login-mainExerciseHeader")
+    @JsonBackReference
     private Login login;
+
+    @OneToMany(mappedBy = "mainExerciseHeader")
+    @JsonManagedReference
+    @OrderBy("exerciseNumber asc ")
+    @Size(max = 4)
+    private List<MainExercise> mainExercises = new ArrayList<>();
 }
