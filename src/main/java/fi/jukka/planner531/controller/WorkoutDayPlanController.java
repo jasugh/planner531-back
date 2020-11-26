@@ -185,25 +185,29 @@ public class WorkoutDayPlanController {
     }
 
     @PutMapping("/{id}/skip")
-    public WorkoutDay skipWorkout(@PathVariable Long id) {
+    public WorkoutDto skipWorkout(@PathVariable Long id) {
         WorkoutDay workoutDay = workoutDayRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Workout not found with id " + id));
 
         workoutDay.setCompleted(true);
         workoutDayRepository.save(workoutDay);
 
-        return workoutDay;
+        WorkoutDayPlan workoutDayPlan = workoutDay.getWorkoutDayPlan();
+        Login login = workoutDayPlan.getLogin();
+        return getNextWorkoutByLoginId(login.getId());
     }
 
     @PutMapping("/{id}/complete")
-    public WorkoutDay completeWorkout(@PathVariable Long id) {
-
+    public WorkoutDto completeWorkout(@PathVariable Long id) {
         WorkoutDay workoutDay = workoutDayRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Workout not found with id " + id));
 
         workoutDay.setCompleted(true);
         workoutDayRepository.save(workoutDay);
-        return workoutDay;
+
+        WorkoutDayPlan workoutDayPlan = workoutDay.getWorkoutDayPlan();
+        Login login = workoutDayPlan.getLogin();
+        return getNextWorkoutByLoginId(login.getId());
     }
 
     @PostMapping("/{id}")

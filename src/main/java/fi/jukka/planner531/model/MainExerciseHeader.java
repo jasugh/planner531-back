@@ -22,7 +22,7 @@ public class MainExerciseHeader {
     private Login login;
 
     @OneToMany(mappedBy = "mainExerciseHeader")
-    @JsonManagedReference
+    @JsonManagedReference(value = "header-exercise")
     @OrderBy("exerciseNumber asc ")
     @Size(max = 4)
     private List<MainExercise> mainExercises = new ArrayList<>();
