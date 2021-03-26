@@ -1,6 +1,6 @@
 package fi.jukka.planner531.dto;
 
-import fi.jukka.planner531.dto.workoutDayPlanGet.ExerciseDay;
+import fi.jukka.planner531.dto.workoutDayPlanGet.ExerciseDayDto;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -14,7 +14,7 @@ public class WorkoutDto {
     private LocalDate workoutDate;
     private boolean assistanceAdded;
     private boolean completed;
-    private List<ExerciseDay> exerciseDays;
+    private List<ExerciseDayDto> exerciseDayDtos;
 
     public WorkoutDto() {
     }
@@ -26,7 +26,7 @@ public class WorkoutDto {
                       LocalDate workoutDate,
                       boolean assistanceAdded,
                       boolean completed,
-                      List<ExerciseDay> exerciseDays) {
+                      List<ExerciseDayDto> exerciseDayDtos) {
         this.id = id;
         this.cycle = cycle;
         this.week = week;
@@ -34,7 +34,7 @@ public class WorkoutDto {
         this.workoutDate = workoutDate;
         this.assistanceAdded = assistanceAdded;
         this.completed = completed;
-        this.exerciseDays = exerciseDays;
+        this.exerciseDayDtos = exerciseDayDtos;
     }
 
     public Long getId() {
@@ -93,11 +93,11 @@ public class WorkoutDto {
         this.completed = completed;
     }
 
-    public List<ExerciseDay> getExerciseDays() {
-        return exerciseDays;
+    public List<ExerciseDayDto> getExerciseDays() {
+        return exerciseDayDtos;
     }
 
-    public void setExerciseDays(List<ExerciseDay> exerciseDays) {
-        this.exerciseDays = exerciseDays;
+    public void setExerciseDays(List<ExerciseDayDto> exerciseDayDtos) {
+        this.exerciseDayDtos = exerciseDayDtos;
     }
 }

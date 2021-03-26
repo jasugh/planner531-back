@@ -11,8 +11,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @RestController
 @RequestMapping("/api/plan")
@@ -78,10 +80,13 @@ public class WorkoutDayPlanController {
         }
         WorkoutDayPlan workoutDayPlan = workoutDayPlanRepository.getOne(login.getWorkoutDayPlan().getId());
 
-        Optional<WorkoutDay> workoutDay = workoutDayPlan.getWorkoutDays()
-                .stream()
-                .filter(woDay -> !(woDay.isCompleted()))
-                .findFirst();
+        Optional<WorkoutDay> workoutDay = Optional.empty();
+        for (WorkoutDay woDay : workoutDayPlan.getWorkoutDays()) {
+            if (!(woDay.isCompleted())) {
+                workoutDay = Optional.of(woDay);
+                break;
+            }
+        }
 
         if (workoutDay.isPresent()) {
             WorkoutDay nextWorkoutDay = workoutDay.get();
@@ -208,6 +213,53 @@ public class WorkoutDayPlanController {
         WorkoutDayPlan workoutDayPlan = workoutDay.getWorkoutDayPlan();
         Login login = workoutDayPlan.getLogin();
         return getNextWorkoutByLoginId(login.getId());
+    }
+
+    @PutMapping("/{woDayExerciseId}/sets")
+    private List<ExerciseSetDto> updateExerciseSets(@PathVariable Long woDayExerciseId,
+                                                    @RequestBody List<ExerciseSetDto> exerciseSetDtos) {
+
+        WorkoutDayExercise workoutDayExercise = workoutDayExerciseRepository.findById(woDayExerciseId)
+                .orElseThrow(() -> new NotFoundException("Exercise was not found with id  " + woDayExerciseId));
+
+        List<WorkoutDaySet> workoutDaySets = workoutDaySetRepository.findAllByWorkoutDayExerciseId(woDayExerciseId);
+
+        // If a set was deleted in frontend then delete it here from DB
+        for (WorkoutDaySet daySet : workoutDaySets) {
+            boolean delete = true;
+            for (ExerciseSetDto s : exerciseSetDtos) {
+                if (s.getId() != null) {
+                    if (s.getId().equals(daySet.getId())) {
+                        delete = false;
+                    }
+                }
+            }
+            if(delete){
+                workoutDaySetRepository.deleteById(daySet.getId());
+            }
+        }
+
+        for (ExerciseSetDto set : exerciseSetDtos) {
+            WorkoutDaySet workoutDaySet;
+            if (set.getId() == null) {
+                workoutDaySet = new WorkoutDaySet();
+                workoutDaySet.setKgs(set.getKgs());
+                workoutDaySet.setReps(set.getReps());
+                workoutDaySet.setFinished(set.isFinished());
+                workoutDaySet.setNotes(set.getNotes());
+                workoutDaySet.setWorkoutDayExercise(workoutDayExercise);
+            } else {
+                workoutDaySet = workoutDaySetRepository.findById(set.getId())
+                        .orElseThrow(() -> new NotFoundException("Exercise set was not found with id  " + set.getId()));
+                workoutDaySet.setKgs(set.getKgs());
+                workoutDaySet.setReps(set.getReps());
+                workoutDaySet.setFinished(set.isFinished());
+                workoutDaySet.setNotes(set.getNotes());
+            }
+            workoutDaySetRepository.save(workoutDaySet);
+        }
+
+        return exerciseSetDtos;
     }
 
     @PostMapping("/{id}")
@@ -505,8 +557,7 @@ public class WorkoutDayPlanController {
     }
 
     public void createWarmUpSets(float[] warmUpKgs, WorkoutDayExercise workoutDayExercise) {
-        int i;
-        for (i = 1; i < 4; i++) {
+        for (int i = 1; i < 4; i++) {
             WorkoutDaySet workoutDaySet = new WorkoutDaySet();
             workoutDaySet.setKgs(warmUpKgs[i - 1]);
             workoutDaySet.setReps(5);
@@ -520,8 +571,7 @@ public class WorkoutDayPlanController {
     }
 
     public void createMainSets(float[] mainKgs, int[] mainReps, WorkoutDayExercise workoutDayExercise) {
-        int i;
-        for (i = 1; i < 4; i++) {
+        for (int i = 1; i < 4; i++) {
             WorkoutDaySet workoutDaySet = new WorkoutDaySet();
             workoutDaySet.setKgs(mainKgs[i - 1]);
             workoutDaySet.setReps(mainReps[i - 1]);
@@ -532,8 +582,7 @@ public class WorkoutDayPlanController {
     }
 
     public void createBBBSets(float bbbKg, WorkoutDayExercise workoutDayExercise) {
-        int i;
-        for (i = 1; i < 6; i++) {
+        for (int i = 1; i < 6; i++) {
             WorkoutDaySet workoutDaySet = new WorkoutDaySet();
             workoutDaySet.setKgs(bbbKg);
             workoutDaySet.setReps(10);
@@ -581,10 +630,9 @@ public class WorkoutDayPlanController {
     private List<CycleDto> toCycleDto(List<WorkoutDay> workoutDays) {
         List<CycleDto> cycleDtoS = new ArrayList<>();
 
-        int i;
         int cycle = 0;
 
-        for (i = 0; i < workoutDays.size(); i++) {
+        for (int i = 0; i < workoutDays.size(); i++) {
             if (workoutDays.get(i).getCycle() != cycle) {
                 cycle = workoutDays.get(i).getCycle();
 
@@ -641,34 +689,39 @@ public class WorkoutDayPlanController {
         return dayDtoS;
     }
 
-    private List<ExerciseDay> toDayExerciseDto(List<WorkoutDayExercise> workoutDayExercises) {
-        List<ExerciseDay> exerciseDays = new ArrayList<>();
+    private List<ExerciseDayDto> toDayExerciseDto(List<WorkoutDayExercise> workoutDayExercises) {
+        List<ExerciseDayDto> exerciseDayDtos = new ArrayList<>();
         int i;
 
         for (i = 0; i < workoutDayExercises.size(); i++) {
-            ExerciseDay exerciseDay = new ExerciseDay();
-            exerciseDay.setId(workoutDayExercises.get(i).getId());
-            exerciseDay.setExerciseBaseId(workoutDayExercises.get(i).getExerciseBaseId());
-            exerciseDay.setExerciseName(workoutDayExercises.get(i).getName());
-            exerciseDay.setExerciseSets(toSetDto(workoutDayExercises.get(i).getWorkoutDaySets()));
-            exerciseDays.add(exerciseDay);
+            ExerciseDayDto exerciseDayDto = new ExerciseDayDto();
+            exerciseDayDto.setId(workoutDayExercises.get(i).getId());
+            exerciseDayDto.setExerciseBaseId(workoutDayExercises.get(i).getExerciseBaseId());
+            exerciseDayDto.setExerciseName(workoutDayExercises.get(i).getName());
+            ExerciseBase exerciseBase = exerciseBaseRepository.getOne(workoutDayExercises.get(i).getExerciseBaseId());
+            exerciseDayDto.setRestTime(exerciseBase.getRestTime());
+            exerciseDayDto.setExerciseSets(toSetDto(workoutDayExercises.get(i).getWorkoutDaySets()));
+            exerciseDayDtos.add(exerciseDayDto);
         }
-        return exerciseDays;
+        return exerciseDayDtos;
     }
 
-    private List<ExerciseSet> toSetDto(List<WorkoutDaySet> workoutDaySets) {
-        List<ExerciseSet> exerciseSets = new ArrayList<>();
+    private List<ExerciseSetDto> toSetDto(List<WorkoutDaySet> workoutDaySets) {
+
+        workoutDaySets.sort(Comparator.comparing(WorkoutDaySet::getId));
+
+        List<ExerciseSetDto> exerciseSetDtos = new ArrayList<>();
         int i;
 
         for (i = 0; i < workoutDaySets.size(); i++) {
-            ExerciseSet exerciseSet = new ExerciseSet();
-            exerciseSet.setId(workoutDaySets.get(i).getId());
-            exerciseSet.setKgs(workoutDaySets.get(i).getKgs());
-            exerciseSet.setReps(workoutDaySets.get(i).getReps());
-            exerciseSet.setFinished(false);
-            exerciseSet.setNotes("");
-            exerciseSets.add(exerciseSet);
+            ExerciseSetDto exerciseSetDto = new ExerciseSetDto();
+            exerciseSetDto.setId(workoutDaySets.get(i).getId());
+            exerciseSetDto.setKgs(workoutDaySets.get(i).getKgs());
+            exerciseSetDto.setReps(workoutDaySets.get(i).getReps());
+            exerciseSetDto.setFinished(workoutDaySets.get(i).isFinished());
+            exerciseSetDto.setNotes(workoutDaySets.get(i).getNotes());
+            exerciseSetDtos.add(exerciseSetDto);
         }
-        return exerciseSets;
+        return exerciseSetDtos;
     }
 }

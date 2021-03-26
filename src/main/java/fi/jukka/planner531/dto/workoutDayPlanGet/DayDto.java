@@ -8,16 +8,16 @@ public class DayDto {
     private int day;
     private LocalDate workoutDate;
     private boolean completed;
-    private List<ExerciseDay> exerciseDays = new ArrayList<>();
+    private List<ExerciseDayDto> exerciseDayDtos = new ArrayList<>();
 
     public DayDto() {
     }
 
-    public DayDto(int day, LocalDate workoutDate, boolean completed, List<ExerciseDay> exerciseDays) {
+    public DayDto(int day, LocalDate workoutDate, boolean completed, List<ExerciseDayDto> exerciseDayDtos) {
         this.day = day;
         this.workoutDate = workoutDate;
         this.completed = completed;
-        this.exerciseDays = exerciseDays;
+        this.exerciseDayDtos = exerciseDayDtos;
     }
 
     public int getDay() {
@@ -44,11 +44,11 @@ public class DayDto {
         this.completed = completed;
     }
 
-    public List<ExerciseDay> getExerciseDays() {
-        return exerciseDays;
+    public List<ExerciseDayDto> getExerciseDays() {
+        return exerciseDayDtos;
     }
 
-    public void setExerciseDays(List<ExerciseDay> exerciseDays) {
-        this.exerciseDays = exerciseDays;
+    public void setExerciseDays(List<ExerciseDayDto> exerciseDayDtos) {
+        this.exerciseDayDtos = exerciseDayDtos;
     }
 }

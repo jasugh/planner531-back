@@ -2,6 +2,7 @@ package fi.jukka.planner531.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import lombok.Data;
+import org.hibernate.annotations.SortComparator;
 
 import javax.persistence.*;
 

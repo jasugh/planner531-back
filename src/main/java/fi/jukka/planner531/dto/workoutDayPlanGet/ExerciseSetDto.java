@@ -1,16 +1,16 @@
 package fi.jukka.planner531.dto.workoutDayPlanGet;
 
-public class ExerciseSet {
+public class ExerciseSetDto {
     private Long id;
     private float kgs;
     private int reps;
     private boolean finished;
     private String notes;
 
-    public ExerciseSet() {
+    public ExerciseSetDto() {
     }
 
-    public ExerciseSet(Long id, float kgs, int reps, boolean finished, String notes) {
+    public ExerciseSetDto(Long id, float kgs, int reps, boolean finished, String notes) {
         this.id = id;
         this.kgs = kgs;
         this.reps = reps;
@@ -56,5 +56,16 @@ public class ExerciseSet {
 
     public void setNotes(String notes) {
         this.notes = notes;
+    }
+
+    @Override
+    public String toString() {
+        return "ExerciseSetDto{" +
+                "id=" + id +
+                ", kgs=" + kgs +
+                ", reps=" + reps +
+                ", finished=" + finished +
+                ", notes='" + notes + '\'' +
+                '}';
     }
 }
