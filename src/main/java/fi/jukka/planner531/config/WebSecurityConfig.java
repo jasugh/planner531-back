@@ -81,7 +81,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         CorsConfiguration configuration = new CorsConfiguration();
 
         configuration.setAllowCredentials(true);
-        configuration.addAllowedOrigin("https://planner531-back.herokuapp.com");
+        configuration.addAllowedOrigin("https://planner531.herokuapp.com");
         configuration.addAllowedHeader("*");
         configuration.addAllowedMethod("*");
 
