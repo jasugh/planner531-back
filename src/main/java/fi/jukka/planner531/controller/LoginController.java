@@ -33,6 +33,7 @@ public class LoginController {
     private Throwable cause(String field) {
         return new Exception(field);
     }
+
     private static final ModelMapper modelMapper = new ModelMapper();
 
     @Autowired
@@ -94,10 +95,11 @@ public class LoginController {
 
     @PostMapping("/authenticate")
     public ResponseEntity<?> authenticateAndCreateToken(@RequestBody JwtRequest jwtRequest) throws Exception {
+
         try {
             authenticate(jwtRequest.getLoginName(), jwtRequest.getPassword());
         } catch (Exception exception) {
-            throw new BadRequestException("Bad credentials", cause(""));
+            throw new BadRequestException("Bad credentials", cause("credentials"));
         }
 
         final UserDetails userDetails = jwtUserDetailsService.loadUserByUsername(jwtRequest.getLoginName());
