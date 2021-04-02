@@ -1,15 +1,19 @@
 package fi.jukka.planner531.dto;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class LoginGetDto {
     private long id;
     private String loginName;
+    private Date passwordChanged;
     private List<RoleDto> roles = new ArrayList<>();
     private long mainExerciseHeaderId;
     private Long startingDetailsId;
     private Long workoutDayPlanId;
+
+    private Date created;
 
     public LoginGetDto() {
     }
@@ -39,6 +43,14 @@ public class LoginGetDto {
 
     public String getLoginName() {
         return loginName;
+    }
+
+    public Date getPasswordChanged() {
+        return passwordChanged;
+    }
+
+    public void setPasswordChanged(Date passwordChanged) {
+        this.passwordChanged = passwordChanged;
     }
 
     public void setLoginName(String loginName) {
@@ -75,5 +87,13 @@ public class LoginGetDto {
 
     public void setWorkoutDayPlanId(Long workoutDayPlanId) {
         this.workoutDayPlanId = workoutDayPlanId;
+    }
+
+    public Date getCreated() {
+        return created;
+    }
+
+    public void setCreated(Date created) {
+        this.created = created;
     }
 }

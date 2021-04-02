@@ -1,13 +1,12 @@
 package fi.jukka.planner531.dto;
 
-import fi.jukka.planner531.model.Login;
-
 import javax.persistence.ElementCollection;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-public class StartingDetailsDto {
+public class
+StartingDetailsDto {
     private Long id;
     private LocalDate startingDate;
     private float pressKg;

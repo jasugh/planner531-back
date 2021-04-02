@@ -14,6 +14,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.transaction.Transactional;
+import java.sql.Timestamp;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -155,6 +157,10 @@ public class StartingDetailsController {
         startingDetailsRepository.save(newStartingDetails);
 
         newStartingDetails.setLogin(login);
+
+        Date date = new Date();
+        newStartingDetails.setCreated(new Timestamp(date.getTime()));
+
         login.setStartingDetails(newStartingDetails);
 
 

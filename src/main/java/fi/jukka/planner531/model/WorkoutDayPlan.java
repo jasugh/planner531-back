@@ -9,6 +9,7 @@ import org.hibernate.annotations.SortNatural;
 import javax.persistence.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Data
@@ -29,4 +30,6 @@ public class WorkoutDayPlan {
     @JsonManagedReference
     @OrderBy("id asc " )
     private List<WorkoutDay> workoutDays = new ArrayList<>();
+
+    private Date created;
 }

@@ -10,10 +10,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.sql.Timestamp;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @RestController
@@ -281,6 +279,10 @@ public class WorkoutDayPlanController {
         // Create a new WorkoutDto Plan
         WorkoutDayPlan workoutDayPlan = new WorkoutDayPlan();
         workoutDayPlan.setStartingDate(startingDetails.getStartingDate());
+
+        Date date = new Date();
+        workoutDayPlan.setCreated(new Timestamp(date.getTime()));
+
         WorkoutDayPlan newWorkoutDayPlan = workoutDayPlanRepository.save(workoutDayPlan);
 
         login.setWorkoutDayPlan(newWorkoutDayPlan);

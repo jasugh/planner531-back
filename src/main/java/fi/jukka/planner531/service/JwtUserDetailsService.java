@@ -1,5 +1,6 @@
 package fi.jukka.planner531.service;
 
+import java.sql.Timestamp;
 import java.util.*;
 
 import fi.jukka.planner531.exception.NotFoundException;
@@ -76,6 +77,8 @@ public class JwtUserDetailsService implements UserDetailsService {
         }
 
         MainExerciseHeader newMainExerciseHeader = new MainExerciseHeader();
+        Date created = new Date();
+        newMainExerciseHeader.setCreated(new Timestamp(created.getTime()));
         mainExerciseHeaderRepository.save(newMainExerciseHeader);
 
         Login newLogin = new Login();
@@ -87,6 +90,9 @@ public class JwtUserDetailsService implements UserDetailsService {
         newLogin.setLoginName(login.getLoginName().toLowerCase());
         newLogin.setPassword(bcryptEncoder.encode(login.getPassword()));
         newLogin.setMainExerciseHeader(newMainExerciseHeader);
+
+        newLogin.setCreated(new Timestamp(created.getTime()));
+
         return loginRepository.save(newLogin);
     }
 }

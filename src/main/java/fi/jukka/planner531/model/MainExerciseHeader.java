@@ -8,6 +8,7 @@ import org.springframework.core.annotation.Order;
 import javax.persistence.*;
 import javax.validation.constraints.Size;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Data
@@ -26,4 +27,6 @@ public class MainExerciseHeader {
     @OrderBy("exerciseNumber asc ")
     @Size(max = 4)
     private List<MainExercise> mainExercises = new ArrayList<>();
+
+    private Date created;
 }

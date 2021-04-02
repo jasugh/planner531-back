@@ -3,13 +3,16 @@ package fi.jukka.planner531.controller;
 import fi.jukka.planner531.config.Constants;
 import fi.jukka.planner531.dto.LoginDto;
 import fi.jukka.planner531.dto.LoginGetDto;
+import fi.jukka.planner531.dto.RoleDto;
 import fi.jukka.planner531.exception.AlreadyExistException;
 import fi.jukka.planner531.exception.BadRequestException;
 import fi.jukka.planner531.exception.NotFoundException;
 import fi.jukka.planner531.model.Login;
+import fi.jukka.planner531.model.Role;
 import fi.jukka.planner531.repository.LoginRepository;
 
 import fi.jukka.planner531.config.JwtTokenUtil;
+import fi.jukka.planner531.repository.RoleRepository;
 import fi.jukka.planner531.service.JwtRequest;
 import fi.jukka.planner531.service.JwtUserDetailsService;
 import org.modelmapper.ModelMapper;
@@ -23,6 +26,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -40,25 +44,41 @@ public class LoginController {
     private AuthenticationManager authenticationManager;
 
     private final LoginRepository loginRepository;
+    private final RoleRepository roleRepository;
     private final JwtTokenUtil jwtTokenUtil;
     private final JwtUserDetailsService jwtUserDetailsService;
 
     @Autowired
     public LoginController(LoginRepository loginRepository,
-                           JwtTokenUtil jwtTokenUtil,
+                           RoleRepository roleRepository, JwtTokenUtil jwtTokenUtil,
                            JwtUserDetailsService jwtUserDetailsService) {
         this.loginRepository = loginRepository;
+        this.roleRepository = roleRepository;
         this.jwtTokenUtil = jwtTokenUtil;
         this.jwtUserDetailsService = jwtUserDetailsService;
     }
 
     @GetMapping("")
     public List<LoginGetDto> findAll() {
-        List<Login> logins = loginRepository.findAll();
+        List<Login> loginsFindAll = loginRepository.findAll();
 
-        return logins.stream()
+        List<LoginGetDto> logs = loginsFindAll.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
+
+        List<LoginGetDto> logins = new ArrayList<>();
+
+        for (LoginGetDto log : logs) {
+            List<RoleDto> roles = log.getRoles();
+            for (RoleDto role : roles) {
+                if (role.getName().equals("USER")) {
+                    logins.add(log);
+                    break;
+                }
+            }
+            roles.clear();
+        }
+        return logins;
     }
 
     @GetMapping("/{id}/id")
@@ -76,23 +96,6 @@ public class LoginController {
         return convertToDTO(login);
     }
 
-    @PostMapping("/register")
-    public LoginGetDto register(@RequestBody LoginDto loginDTO) {
-        if (loginDTO.getLoginName().isEmpty()) {
-            throw new BadRequestException("Username can not be blank", cause("loginName"));
-        }
-        if (!checkPasswordLength(loginDTO.getPassword())) {
-            throw new BadRequestException("Incorrect password", cause("password"));
-        }
-
-        Login newLogin = loginRepository.findFirstByLoginName(loginDTO.getLoginName());
-        if (newLogin == null) {
-            return convertToDTO(jwtUserDetailsService.save(loginDTO));
-        } else {
-            throw new AlreadyExistException("Login already exists: " + newLogin.getLoginName());
-        }
-    }
-
     @PostMapping("/authenticate")
     public ResponseEntity<?> authenticateAndCreateToken(@RequestBody JwtRequest jwtRequest) throws Exception {
 
@@ -106,13 +109,6 @@ public class LoginController {
         final String token = jwtTokenUtil.generateToken(userDetails);
 
         return ResponseEntity.ok(token);
-    }
-
-    @DeleteMapping("/{id}")
-    ResponseEntity<?> deleteOne(@PathVariable Long id) {
-        getOne(id);
-        loginRepository.deleteById(id);
-        return ResponseEntity.noContent().build();
     }
 
     private void authenticate(String loginName, String password) throws Exception {
