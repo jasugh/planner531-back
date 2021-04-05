@@ -60,7 +60,7 @@ public class LoginController {
 
     @GetMapping("")
     public List<LoginGetDto> findAll() {
-        List<Login> loginsFindAll = loginRepository.findAll();
+        List<Login> loginsFindAll = loginRepository.findAllByOrderById();
 
         List<LoginGetDto> logs = loginsFindAll.stream()
                 .map(this::convertToDTO)

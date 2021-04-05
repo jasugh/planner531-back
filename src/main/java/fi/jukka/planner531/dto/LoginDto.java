@@ -7,8 +7,8 @@ public class LoginDto {
     private Long id;
     private String loginName;
     private String password;
-    private LocalDate passwordChanged;
-    private LocalDate changed;
+    private Date passwordChanged;
+    private Date changed;
     private Date created;
 
 
@@ -36,19 +36,19 @@ public class LoginDto {
         this.password = password;
     }
 
-    public LocalDate getPasswordChanged() {
+    public Date getPasswordChanged() {
         return passwordChanged;
     }
 
-    public void setPasswordChanged(LocalDate passwordChanged) {
+    public void setPasswordChanged(Date passwordChanged) {
         this.passwordChanged = passwordChanged;
     }
 
-    public LocalDate getChanged() {
+    public Date getChanged() {
         return changed;
     }
 
-    public void setChanged(LocalDate changed) {
+    public void setChanged(Date changed) {
         this.changed = changed;
     }
 

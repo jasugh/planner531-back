@@ -9,6 +9,7 @@ import java.lang.reflect.Array;
 import java.util.List;
 
 public interface LoginRepository extends JpaRepository<Login, Long> {
+    List<Login> findAllByOrderById();
     Login findFirstByLoginName(String loginName);
     Login findByLoginName(String loginName);
 }

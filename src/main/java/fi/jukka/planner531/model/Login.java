@@ -23,8 +23,7 @@ public class Login {
     @JsonIgnore
     private String password;
 
-    @JsonFormat(pattern = "yyyy-MM-dd")
-    private LocalDate passwordChanged;
+    private Date passwordChanged;
 
     @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.REMOVE)
     @JsonBackReference

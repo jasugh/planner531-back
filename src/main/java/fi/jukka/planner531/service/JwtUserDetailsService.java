@@ -83,7 +83,7 @@ public class JwtUserDetailsService implements UserDetailsService {
 
         Login newLogin = new Login();
         Role role = roleRepository.findFirstByName("USER");
-        if(login.getLoginName().equals("admin")){
+        if (login.getLoginName().equals("admin")) {
             role = roleRepository.findFirstByName("ADMIN");
         }
         newLogin.getRoles().add(role);

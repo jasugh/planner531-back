@@ -68,11 +68,29 @@ public class LoginMaintenanceController {
 
     @PutMapping("/register/{id}")
     public LoginGetDto registerUpdate(@RequestBody LoginDto loginDTO, @PathVariable Long id) {
-        getOne(id);
-        checkLoginData(loginDTO);
 
-        loginDTO.setChanged(LocalDate.now());
-        return convertToDTO(jwtUserDetailsService.save(loginDTO));
+        if (loginDTO.getLoginName().isEmpty()) {
+            throw new BadRequestException("Username can not be blank", cause("loginName"));
+        }
+
+        Date changed = new Date();
+
+        Login login = loginRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Login not found with id " + id));
+
+        if (!login.getLoginName().equals(loginDTO.getLoginName())) {
+            Login checkLogin = loginRepository.findFirstByLoginName(loginDTO.getLoginName());
+            if (checkLogin != null) {
+                throw new AlreadyExistException("Login already exists: " + checkLogin.getLoginName());
+            }
+            login.setLoginName(loginDTO.getLoginName());
+            login.setCreated(new Timestamp(changed.getTime()));
+
+            return convertToDTO(loginRepository.save(login));
+        } else {
+            return convertToDTO(login);
+        }
+
     }
 
     @DeleteMapping("/{id}")
@@ -106,11 +124,6 @@ public class LoginMaintenanceController {
         }
 
         return ResponseEntity.noContent().build();
-    }
-
-    private void getOne(Long id) {
-        loginRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Login not found with id " + id));
     }
 
     private void checkLoginData(LoginDto loginDTO) {
