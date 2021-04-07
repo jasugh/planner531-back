@@ -12,7 +12,7 @@ public class LoginGetDto {
     private long mainExerciseHeaderId;
     private Long startingDetailsId;
     private Long workoutDayPlanId;
-
+    private Date changed;
     private Date created;
 
     public LoginGetDto() {
@@ -21,12 +21,14 @@ public class LoginGetDto {
     public LoginGetDto(
             long id,
             String loginName,
+            Date passwordChanged,
             List<RoleDto> roles,
             Long mainExerciseHeaderId,
             Long startingDetailsId,
             Long workoutDayPlanId) {
         this.id = id;
         this.loginName = loginName;
+        this.passwordChanged = passwordChanged;
         this.roles = roles;
         this.mainExerciseHeaderId = mainExerciseHeaderId;
         this.startingDetailsId = startingDetailsId;
@@ -87,6 +89,14 @@ public class LoginGetDto {
 
     public void setWorkoutDayPlanId(Long workoutDayPlanId) {
         this.workoutDayPlanId = workoutDayPlanId;
+    }
+
+    public Date getChanged() {
+        return changed;
+    }
+
+    public void setChanged(Date changed) {
+        this.changed = changed;
     }
 
     public Date getCreated() {
