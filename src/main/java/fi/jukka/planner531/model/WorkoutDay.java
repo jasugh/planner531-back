@@ -8,6 +8,7 @@ import lombok.Data;
 import javax.persistence.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Data
@@ -33,5 +34,6 @@ public class WorkoutDay {
     @JsonManagedReference
     private List<WorkoutDayExercise>  workoutDayExercises = new ArrayList<>();
 
+    private Date created;
 }
 
