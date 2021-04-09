@@ -54,7 +54,7 @@ public class AppConfiguration {
     CommandLineRunner initDatabase() {
         return args -> {
 
-            System.out.println("initDatabase ---->");
+            System.out.println("<********** INIT DATABASE **********>");
 
             Login login = loginRepository.findFirstByLoginName("admin");
             if (login == null) {
