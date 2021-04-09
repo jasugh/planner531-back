@@ -25,7 +25,7 @@ public class WorkoutDay {
 
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate workoutDate;
- 
+
     @ManyToOne
     @JsonBackReference
     private WorkoutDayPlan workoutDayPlan;
