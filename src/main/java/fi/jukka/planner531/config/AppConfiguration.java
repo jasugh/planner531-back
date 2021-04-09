@@ -55,7 +55,7 @@ public class AppConfiguration {
         return args -> {
 
             System.out.println("initDatabase ---->");
-            
+
             Login login = loginRepository.findFirstByLoginName("admin");
             if (login == null) {
                 LoginDto newLoginDTO = new LoginDto();
