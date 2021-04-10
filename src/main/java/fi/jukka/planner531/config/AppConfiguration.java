@@ -53,8 +53,8 @@ public class AppConfiguration {
     @Bean
     CommandLineRunner initDatabase() {
         return args -> {
-
             System.out.println("<********** INIT DATABASE **********>");
+            System.out.println("********** JDBC_DATABASE_URL: " + System.getenv("JDBC_DATABASE_URL"));
 
             Login login = loginRepository.findFirstByLoginName("admin");
             if (login == null) {
